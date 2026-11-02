@@ -81,6 +81,7 @@
     </form>
     <ul id="name-list" class="chips" aria-label="Uczestnicy"></ul>
     <p id="names-count" class="muted">Dodaj co najmniej 2 osoby.</p>
+    <p class="muted">Imiona odmieniam automatycznie (np. dla Kasi). Jeżeli jakaś forma jest błędna, kliknij ✏️ przy danej osobie, aby ją poprawić.</p>
     <button id="draw" class="red wide big" disabled type="button">🎲 Rozlosuj prezenty</button>
     <div class="panel">
       <h3>Masz kopię wcześniejszego losowania?</h3>
@@ -94,6 +95,7 @@
     <div class="panel">
       <h2>🔗 Jeden link dla wszystkich</h2>
       <p class="sub">Skopiuj i wyślij go na grupę. To dokładnie ten sam adres dla każdego uczestnika.</p>
+      <p class="muted">Uwaga: link jest długi, bo zawiera zaszyfrowane wyniki. Jeśli komunikator utnie końcówkę <code>#room=…</code>, uczestnicy nie zobaczą formularza PIN. Wysyłaj go przez „Kopiuj wspólny link”.</p>
       <label for="room-url">Wspólny link</label>
       <textarea id="room-url" class="share-url" readonly rows="3" aria-label="Wspólny link do losowania"></textarea>
       <div class="actions">
@@ -103,7 +105,7 @@
     </div>
     <div class="panel">
       <h2>🔐 Prywatne PIN-y uczestników</h2>
-      <p class="sub">Każdemu wyślij <strong>tylko jego</strong> PIN prywatną wiadomością. Bez tego kodu nie odszyfruje swojego wyniku.</p>
+      <p class="sub">Każdemu wyślij <strong>tylko jego</strong> PIN prywatną wiadomością. Bez tego kodu nie odszyfruje swojego wyniku. Wyświetlam kod w czterech grupach po cztery cyfry — można go skopiować jednym kliknięciem.</p>
       <ul id="pin-list" class="pin-list" aria-label="PIN-y uczestników"></ul>
       <div class="notice">Nie wysyłaj całej listy PIN-ów na grupę. PIN-y są 16-cyfrowe, aby zapewnić ochronę bez centralnej bazy danych.</div>
     </div>
@@ -131,8 +133,9 @@
       <select id="guest-name" required>
         <option value="">— Wybierz imię —</option>
       </select>
-      <label for="guest-pin">Twój 16-cyfrowy PIN</label>
-      <input id="guest-pin" type="password" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" minlength="16" autocomplete="off" placeholder="••••••••••••••••" required>
+      <label for="guest-pin">Twój PIN (16 cyfr)</label>
+      <input id="guest-pin" type="password" inputmode="numeric" maxlength="24" autocomplete="off" placeholder="Wklej 16 cyfr PIN-u" required>
+      <p class="muted">Możesz wkleić PIN ze spacjami lub myślnikami. Najwygodniej skopiować go z wiadomości organizatora.</p>
       <button id="unlock" class="red wide big" style="margin-top:17px" type="submit">🎁 Odkryj mój wynik</button>
     </form>
     <div id="guest-result" class="reveal hidden" aria-live="polite">
@@ -153,7 +156,7 @@
   <footer>Bez konta i serwera. Wyniki szyfrowane AES-GCM. Pamiętaj, że posiadacz Twojego PIN-u może odczytać Twój wynik.</footer>
 </main>
 <script type="module">
-  import {MAX_PARTICIPANTS, PIN_LENGTH, normalizeNames, createRoom, encodeRoom, decodeRoom, unlock, backupIsValid} from './santa-core.mjs';
+  import {MAX_PARTICIPANTS, PIN_LENGTH, normalizeNames, polishGenitive, createRoom, encodeRoom, decodeRoom, unlockDetails, backupIsValid} from './santa-core.mjs';
 
   const storageKey = 'secret-santa-group-v1';
   const $ = id => document.getElementById(id);
@@ -163,6 +166,7 @@
     'status','invalid-message'];
   const el = Object.fromEntries(ids.map(id => [id.replace(/-([a-z])/g,(_,c)=>c.toUpperCase()), $(id)]));
   let names = [];
+  let genitiveOverrides = {};
   let adminData = null;
   let room = null;
   let loading = false;
@@ -200,7 +204,15 @@
       remove.dataset.index = String(index);
       remove.setAttribute('aria-label', 'Usuń ' + name);
       remove.textContent = '×';
-      li.append(text,remove); el.nameList.append(li);
+      const form = document.createElement('span');
+      form.className = 'muted';
+      form.textContent = 'dla ' + (genitiveOverrides[name] || polishGenitive(name));
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.dataset.edit = String(index);
+      edit.textContent = '✏️';
+      edit.setAttribute('aria-label', 'Popraw odmianę: ' + name);
+      li.append(text,form,edit,remove); el.nameList.append(li);
     });
     el.draw.disabled = names.length < 2 || loading;
     el.namesCount.textContent = names.length + '/' + MAX_PARTICIPANTS + ' uczestników';
@@ -218,7 +230,8 @@
       const div = document.createElement('div');
       div.className = 'pin-group';
       const code = document.createElement('code');
-      code.className = 'code'; code.textContent = adminData.pins[index];
+      code.className = 'code';
+      code.textContent = adminData.pins[index].replace(/(\d{4})(?=\d)/g, '$1-');
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'pin-copy';
       button.dataset.index = String(index); button.textContent = '📋 Kopiuj PIN';
@@ -282,19 +295,39 @@
     names.push(name);el.addName.value = ''; renderNames();status('');el.addName.focus();
   });
   el.nameList.addEventListener('click',event => {
+    const edit = event.target.closest('button[data-edit]');
+    if (edit) {
+      const name = names[Number(edit.dataset.edit)];
+      if (!name) return;
+      const proposed = window.prompt('Wpisz imię w formie po słowie „dla” (np. Kasia → Kasi):',
+        genitiveOverrides[name] || polishGenitive(name));
+      if (proposed === null) return;
+      const fixed = proposed.trim();
+      if (!fixed || fixed.length > 70) {status('Odmienione imię powinno mieć 1–70 znaków.');return;}
+      genitiveOverrides[name] = fixed;
+      renderNames();status('Zapisano odmianę dla: ' + name);return;
+    }
     const button = event.target.closest('button[data-index]');
     if (!button) return;
-    names.splice(Number(button.dataset.index),1);
+    const removed = names.splice(Number(button.dataset.index),1)[0];
+    if (removed) delete genitiveOverrides[removed];
     renderNames();status('');
   });
 
   el.draw.addEventListener('click', async () => {
     if (loading) return;
     loading = true;el.draw.disabled = true;el.draw.textContent = '🔐 Szyfruję losowanie…';
-    status('Tworzę osobne, zaszyfrowane wyniki dla wszystkich uczestników.');
+    status('Tworzę zaszyfrowane wyniki. To może potrwać chwilę przy większej grupie.');
     try {
-      const created = await createRoom(normalizeNames(names));
-      adminData = {v:1, ...created};
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const created = await createRoom(normalizeNames(names), {
+        genitives: genitiveOverrides,
+        onProgress: (done,total) => {
+          el.draw.textContent = '🔐 Szyfruję ' + done + '/' + total + '…';
+          status('Gotowe: ' + done + ' z ' + total + ' uczestników.');
+        }
+      });
+      adminData = {v:1, ...created, genitives: {...genitiveOverrides}};
       saveAdmin();
       renderAdmin();
     } catch (error) {
@@ -329,7 +362,9 @@
     adminData.names.forEach((name,i) => {
       const li = document.createElement('li');
       const giver = document.createElement('span');giver.textContent = name;
-      const recipient = document.createElement('strong');recipient.textContent = '→ ' + adminData.recipients[i];
+      const recipient = document.createElement('strong');
+      const raw = adminData.recipients[i];
+      recipient.textContent = '→ dla ' + (adminData.genitives?.[raw] || polishGenitive(raw));
       li.append(giver,recipient); el.pairsList.append(li);
     });
     el.pairsPanel.classList.remove('hidden');
@@ -355,8 +390,11 @@
   });
   el.backupCsv.addEventListener('click',() => {
     if (!adminData) return;
-    const rows = [['Imię','PIN','Prezent dla'].map(csvCell).join(';')];
-    adminData.names.forEach((name,i) => rows.push([name,adminData.pins[i],adminData.recipients[i]].map(csvCell).join(';')));
+    const rows = [['Imię','PIN','Oryginalne imię','Po słowie dla'].map(csvCell).join(';')];
+    adminData.names.forEach((name,i) => {
+      const target = adminData.recipients[i];
+      rows.push([name,adminData.pins[i],target,adminData.genitives?.[target] || polishGenitive(target)].map(csvCell).join(';'));
+    });
     download('\ufeff'+rows.join('\r\n'),'text/csv;charset=utf-8','secret-santa-przydzialy-prywatne.csv');
   });
   el.restoreFile.addEventListener('change',async () => {
@@ -366,14 +404,18 @@
       if (file.size > 150000) throw new Error('Plik jest zbyt duży.');
       const data = JSON.parse(await file.text());
       if (!backupIsValid(data)) throw new Error('Nieprawidłowa kopia zapasowa.');
-      adminData = data;names = data.names.slice();saveAdmin();renderAdmin();
+      adminData = data;names = data.names.slice();
+      genitiveOverrides = {...(data.genitives || {})};
+      saveAdmin();renderAdmin();
       status('Przywrócono losowanie z prywatnej kopii.');
     } catch (error) {status(error.message || 'Nie udało się otworzyć kopii.');}
     el.restoreFile.value = '';
   });
   el.reset.addEventListener('click',() => {
     if (!window.confirm('Rozpocząć nowe losowanie? Stary link pozostanie ważny, dlatego po ponownym losowaniu poinformuj wszystkich o nowym linku i PIN-ach.'))return;
-    names = adminData?.names.slice() || [];adminData = null;
+    names = adminData?.names.slice() || [];
+    genitiveOverrides = {...(adminData?.genitives || {})};
+    adminData = null;
     try {localStorage.removeItem(storageKey);}catch(_){}
     route();status('Możesz zmienić uczestników i rozpocząć nowe losowanie.');
   });
@@ -381,7 +423,7 @@
     event.preventDefault();
     if (!room) return;
     const name = el.guestName.value;
-    const pin = el.guestPin.value.trim();
+    const pin = el.guestPin.value.replace(/[\s-]/g,'');
     if (!name) {status('Wybierz swoje imię.');return;}
     if (!new RegExp('^[0-9]{'+PIN_LENGTH+'}$').test(pin)) {status('Wpisz '+PIN_LENGTH+'-cyfrowy PIN.');return;}
     hideGuestResult();
@@ -389,9 +431,9 @@
     el.unlock.disabled = true;el.unlock.textContent = '🔐 Sprawdzam PIN…';
     status('');
     try {
-      const recipient = await unlock(currentRoom,name,pin);
+      const recipient = await unlockDetails(currentRoom,name,pin);
       if (room !== currentRoom) return;
-      el.guestRecipient.textContent = recipient;
+      el.guestRecipient.textContent = recipient.forName;
       el.guestResult.classList.remove('hidden');
       el.guestHide.classList.remove('hidden');
     } catch (error) {status(error.message || 'Nie udało się odczytać wyniku.');}
