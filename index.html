@@ -50,6 +50,16 @@
     .result strong { display: block; margin-top: 5px; font-size: clamp(1.4rem, 5vw, 2rem); color: var(--gold); overflow-wrap: anywhere; }
     .row-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
     .row-actions button { flex: 1; }
+    .organizer-panel { margin-top: 22px; }
+    .organizer-toggle { width: 100%; }
+    .organizer-results { margin-top: 12px; padding: 18px; border: 1px solid #d39a4980; border-radius: 14px; background: #292535; }
+    .organizer-results h2 { margin: 0 0 6px; }
+    .organizer-warning { font-size: .85rem; color: #ffdfad; }
+    .pairs { margin: 15px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .pairs li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-radius: 10px; background: #151e32; overflow-wrap: anywhere; }
+    .pairs .giver { font-weight: 700; }
+    .pairs .recipient { color: var(--gold); font-weight: 700; }
+    .organizer-hide { width: 100%; }
     .foot { text-align: center; margin: 23px 0 0; color: var(--muted); font-size: .8rem; }
     .hidden { display: none !important; }
     @media (max-width: 360px) { .card { padding: 23px 16px; } .input-row { flex-wrap: wrap; } .add { width: 100%; } }
@@ -97,6 +107,15 @@
         </div>
         <button id="hide-button" type="button" class="secondary hidden">🙈 Ukryj wynik i przekaż telefon</button>
       </div>
+      <section class="organizer-panel" aria-label="Panel organizatora">
+        <button id="organizer-toggle" type="button" class="outline organizer-toggle" aria-controls="organizer-results" aria-expanded="false">🎅 Pokaż wszystkie pary (organizator)</button>
+        <div id="organizer-results" class="organizer-results hidden">
+          <h2>🎅 Panel organizatora</h2>
+          <p class="organizer-warning">Uwaga! Poniżej widać całe losowanie. Ukryj tę listę przed przekazaniem telefonu.</p>
+          <ol id="all-pairs" class="pairs" aria-label="Wszystkie pary w losowaniu"></ol>
+          <button id="organizer-hide" type="button" class="secondary organizer-hide">🙈 Ukryj wszystkie pary</button>
+        </div>
+      </section>
       <div class="row-actions">
         <button id="restart-button" class="outline" type="button">↻ Losuj ponownie / zmień listę</button>
       </div>
@@ -114,7 +133,9 @@
         setup: $('setup-view'), draw: $('draw-view'), form: $('add-form'), input: $('name-input'),
         people: $('participants'), count: $('count'), drawButton: $('draw-button'),
         select: $('person-select'), reveal: $('reveal-button'), result: $('result'),
-        recipient: $('recipient-name'), hide: $('hide-button'), restart: $('restart-button'), message: $('message')
+        recipient: $('recipient-name'), hide: $('hide-button'), restart: $('restart-button'), message: $('message'),
+        organizerToggle: $('organizer-toggle'), organizerResults: $('organizer-results'),
+        organizerHide: $('organizer-hide'), allPairs: $('all-pairs')
       };
       let participants = [];
       let assignments = null;
@@ -179,6 +200,7 @@
         elements.select.add(prompt);
         participants.forEach((name, i) => elements.select.add(new Option(name, String(i))));
         conceal();
+        hideOrganizer();
       }
 
       // Random derangement: no one gets themselves, everyone is assigned once.
@@ -208,6 +230,47 @@
         elements.select.value = '';
         elements.reveal.disabled = true;
       }
+
+      function hideOrganizer() {
+        elements.organizerResults.classList.add('hidden');
+        elements.organizerToggle.setAttribute('aria-expanded', 'false');
+        elements.organizerToggle.textContent = '🎅 Pokaż wszystkie pary (organizator)';
+        elements.allPairs.replaceChildren();
+      }
+
+      function showOrganizer() {
+        if (!assignments) return;
+        if (!window.confirm('Uwaga! Zobaczysz WSZYSTKIE pary. Czy na pewno chcesz pokazać wyniki organizatora?')) return;
+        conceal();
+        elements.allPairs.replaceChildren();
+        participants.forEach((giver, index) => {
+          const li = document.createElement('li');
+          const giverName = document.createElement('span');
+          giverName.className = 'giver';
+          giverName.textContent = giver;
+          const arrow = document.createElement('span');
+          arrow.setAttribute('aria-hidden', 'true');
+          arrow.textContent = '→';
+          const recipientName = document.createElement('span');
+          recipientName.className = 'recipient';
+          recipientName.textContent = assignments[index];
+          li.append(giverName, arrow, recipientName);
+          elements.allPairs.append(li);
+        });
+        elements.organizerResults.classList.remove('hidden');
+        elements.organizerToggle.setAttribute('aria-expanded', 'true');
+        elements.organizerToggle.textContent = '🙈 Ukryj wszystkie pary';
+        message('Panel organizatora jest otwarty. Nie pokazuj tej listy uczestnikom.');
+      }
+
+      elements.organizerToggle.addEventListener('click', () => {
+        if (elements.organizerResults.classList.contains('hidden')) showOrganizer();
+        else { hideOrganizer(); message('Wszystkie pary zostały ukryte.'); }
+      });
+      elements.organizerHide.addEventListener('click', () => {
+        hideOrganizer();
+        message('Wszystkie pary zostały ukryte.');
+      });
 
       elements.form.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -239,12 +302,14 @@
       });
 
       elements.select.addEventListener('change', () => {
+        hideOrganizer();
         elements.reveal.disabled = elements.select.value === '';
       });
 
       elements.reveal.addEventListener('click', () => {
         const index = Number(elements.select.value);
         if (!assignments || elements.select.value === '' || !Number.isInteger(index) || index < 0 || index >= participants.length) return;
+        hideOrganizer();
         elements.recipient.textContent = assignments[index];
         elements.result.classList.remove('hidden');
         elements.reveal.classList.add('hidden');
@@ -253,7 +318,7 @@
         message('Zapamiętaj imię, a potem ukryj wynik.');
       });
 
-      elements.hide.addEventListener('click', () => { conceal(); message('Wynik ukryty. Możesz przekazać urządzenie dalej.'); });
+      elements.hide.addEventListener('click', () => { conceal(); hideOrganizer(); message('Wynik ukryty. Możesz przekazać urządzenie dalej.'); });
       elements.restart.addEventListener('click', () => {
         if (!window.confirm('Usunąć wyniki losowania? Uczestnicy pozostaną na liście.')) return;
         assignments = null;
