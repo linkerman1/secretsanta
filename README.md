@@ -1,37 +1,41 @@
-# Secret Santa 🎁
+# 🎁 Secret Santa — jeden link dla wszystkich, osobne PIN-y
 
-Świąteczne losowanie prezentów: organizator przygotowuje uczestników, a każdy dostaje **swój prywatny link** i może odkryć wynik na własnym telefonie. Aplikacja jest po polsku, działa bez kont i bez własnego serwera na GitHub Pages.
+Wspólny link do aplikacji: https://linkerman1.github.io/secretsanta/
 
-## Jak przeprowadzić losowanie na różnych telefonach
+Wersja działa jako statyczna strona **GitHub Pages**, bez kont, osobnej bazy danych i udostępniania osobnego adresu każdemu uczestnikowi. Wszystkie przydziały przygotowuje organizator **raz** na swoim urządzeniu.
 
-1. Organizator otwiera https://linkerman1.github.io/secretsanta/ **bez dodatkowego fragmentu w adresie**.
-2. Dodaje uczestników (minimum dwie osoby), a potem klika **Losuj i przygotuj linki**.
-3. Aplikacja losuje wszystkich jednocześnie: każdy otrzymuje jednego odbiorcę prezentu, nikt nie trafia na siebie ani nie zostaje przydzielony dwa razy.
-4. Na liście przy każdym imieniu są przyciski **Kopiuj link** oraz (jeśli telefon obsługuje) **Wyślij**. Organizator przesyła **indywidualny** link danej osobie przez komunikator.
-5. Uczestnik otwiera link na swoim telefonie i klika **Odkryj, komu kupujesz prezent**. Widzi tylko swoje imię i jedną wylosowaną osobę.
-6. W razie problemów organizator używa **Pokaż wszystkie pary (organizator)** lub pobiera **Pobierz prywatną kopię losowania (.csv)**.
+## Instrukcja dla organizatora
 
-**Nie wystarczy rozesłać wszystkim głównego adresu strony.** Każdy uczestnik musi otrzymać oddzielny link wygenerowany po losowaniu.
+1. Wejdź na **główny adres** (bez `#room=`) na swoim telefonie lub komputerze.
+2. Dodaj 2–24 uczestników. Imiona muszą być unikalne.
+3. Kliknij **Rozlosuj prezenty**. Każdy dostanie dokładnie jedną osobę; nikt nie trafi na siebie, nie będzie powtórek.
+4. Zobaczysz **jeden wspólny link**. Skopiuj go i wyślij całej grupie (np. na Messengerze). To nie jest po prostu adres strony głównej: kończy się długim kodem `#room=...`, zawierającym zaszyfrowane wyniki.
+5. Każdy uczestnik otrzymuje **osobny 16-cyfrowy PIN**. Wyślij mu ten PIN **prywatnie** (lub podaj osobiście). Nigdy nie publikuj listy PIN-ów na grupie.
+6. Pobierz **prywatną kopię .json** — przywraca przydziały i PIN-y, jeśli wyczyścisz przeglądarkę. Możesz też pobrać CSV z listą par i kodów.
 
-## Ważne ograniczenia i prywatność
+Uczestnik otwiera **ten sam wspólny link** na swoim urządzeniu, wybiera swoje imię, wpisuje PIN i klika **Odkryj mój wynik**. Widzi tylko przypisaną mu osobę.
 
-- Losowanie odbywa się **jednorazowo u organizatora**, przed wysłaniem linków. Uczestnicy odsłaniają gotowe przydziały. To gwarantuje brak powtórek bez współdzielonej bazy danych.
-- **Linki są poufne, ale nie jednorazowe**: każda osoba z danym linkiem może wielokrotnie zobaczyć przypisany wynik. Nie ma logowania ani weryfikacji tożsamości.
-- Treść przydziału w linku jest szyfrowana AES-GCM za pomocą Web Crypto. Klucz znajduje się w fragmencie adresu po znaku `#`; GitHub Pages nie otrzymuje fragmentu URL w żądaniu HTTP. Nie wysyłaj linków publicznie.
-- Uczestnicy nie mogą poznać innych przydziałów na podstawie **samego swojego** linku. Organizator ma jednak dostęp do wszystkich wyników.
-- Lista uczestników, gotowe przydziały i wygenerowane linki są zapisane w **localStorage organizatora** na tym samym urządzeniu/przeglądarce. Nie są zapisywane na GitHubie ani synchronizowane między urządzeniami.
-- **Pobierz kopię CSV i zachowaj ją prywatnie**. W razie utraty danych przeglądarki plik pozwoli odzyskać wszystkie przydziały i wysłane linki. Nie publikuj tego pliku w repozytorium.
-- Jeśli organizator kliknie **Losuj ponownie**, stare linki wciąż będą pokazywały poprzednie przydziały. Trzeba wtedy powiadomić uczestników, że obowiązują **nowe** linki.
-- Dodatkowo zachowano możliwość odkrywania wyników na jednym urządzeniu, jeśli ktoś nie może użyć swojego telefonu.
+## Co chroni prywatność?
 
-## GitHub Pages
+- Każdy odbiorca prezentu jest szyfrowany **oddzielnie** algorytmem AES-GCM. Klucz dla danego uczestnika powstaje przez PBKDF2-SHA256 z jego losowego 16-cyfrowego PIN-u i unikalnej soli (310 000 iteracji).
+- Publiczny wspólny link zawiera **imiona i zaszyfrowane dane**. Nie zawiera PIN-ów ani czytelnej listy przydziałów. Uczestnik posiadający wyłącznie swój PIN nie może normalnie odszyfrować cudzych wyników.
+- Nie ma centralnego serwera do sprawdzania PIN-ów ani ograniczania liczby prób. Używaj tylko **automatycznie wygenerowanych 16-cyfrowych PIN-ów**; krótkie lub łatwe PIN-y byłyby narażone na ataki słownikowe/offline. PIN-y nie są jednorazowe — kto je pozna, może sprawdzić przydział danej osoby.
+- Organizator dysponuje wszystkimi przydziałami i PIN-ami w **localStorage** swojego urządzenia i może je podejrzeć. Każda osoba z dostępem do urządzenia organizatora lub prywatnego pliku kopii również może je zobaczyć.
+- Wspólny link i PIN można otworzyć wielokrotnie. **Nowe losowanie nie unieważnia poprzedniego linku** — po losowaniu na nowo poinformuj wszystkich, że stare przydziały nie obowiązują.
+- Bez odrębnej bazy nie da się wymusić jednokrotnego otwarcia, śledzić kto już zajrzał, odzyskać zgubionego PIN-u bez organizatora ani odebrać dostępu do starego linku.
 
-Repozytorium jest publiczne. Automatyczna publikacja działa przez GitHub Actions (`.github/workflows/deploy.yml`) po każdym wypchnięciu zmian do `main`.
+## Kopie zapasowe
 
-Strona: https://linkerman1.github.io/secretsanta/
+- **JSON** zawiera cały stan organizatora (imiona, PIN-y, wyniki, zaszyfrowany zestaw). Można go zaimportować z poziomu strony głównej.
+- **CSV** zawiera imiona, PIN-y i osoby przypisane do prezentów. Ułatwia ręczny podgląd, ale nie służy do automatycznego importu.
+- Oba pliki są **poufne**. Nigdy nie umieszczaj ich w publicznym repozytorium GitHub.
 
-[Ustawienia Pages](https://github.com/linkerman1/secretsanta/settings/pages) · [Wdrożenia](https://github.com/linkerman1/secretsanta/actions/workflows/deploy.yml)
+## Publikacja
 
-## Uruchomienie lokalne
+Pliki `index.html` i `santa-core.mjs` publikowane są przez `.github/workflows/deploy.yml` (GitHub Actions). Przed wdrożeniem workflow uruchamia `node test.mjs`, który sprawdza losowanie, szyfrowanie, błędne PIN-y i kopie zapasowe.
 
-Zamiast otwierać plik z dysku, uruchom serwer HTTPS lub `python3 -m http.server 8000` i wejdź na `http://localhost:8000`; Web Crypto wymaga bezpiecznego kontekstu (HTTPS lub localhost).
+[Ustawienia GitHub Pages](https://github.com/linkerman1/secretsanta/settings/pages) • [Wdrożenia](https://github.com/linkerman1/secretsanta/actions/workflows/deploy.yml)
+
+## Test lokalny
+
+Zainstaluj Node.js 20 lub nowszy, uruchom `node test.mjs`. Do testu strony użyj `python3 -m http.server 8000` i przejdź na `http://localhost:8000`. Web Crypto wymaga HTTPS lub localhost.
