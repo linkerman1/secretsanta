@@ -1,34 +1,37 @@
 # Secret Santa 🎁
 
-Prosta aplikacja do losowania świątecznych prezentów po polsku. Działa bez serwera, bez kont i bez zewnętrznych bibliotek.
+Świąteczne losowanie prezentów: organizator przygotowuje uczestników, a każdy dostaje **swój prywatny link** i może odkryć wynik na własnym telefonie. Aplikacja jest po polsku, działa bez kont i bez własnego serwera na GitHub Pages.
 
-## Jak używać
+## Jak przeprowadzić losowanie na różnych telefonach
 
-1. Dodaj co najmniej 2 uczestników (nie można dodać tego samego imienia dwa razy).
-2. Kliknij **Rozlosuj prezenty**. Każdy dostanie dokładnie jedną osobę i nikt nie wylosuje samego siebie.
-3. Przekazuj urządzenie kolejnym osobom. Każdy wybiera swoje imię, sprawdza wynik i klika **Ukryj wynik** przed przekazaniem telefonu.
-4. Wyniki i lista są przechowywane lokalnie w pamięci przeglądarki (`localStorage`). Można wrócić do nich po odświeżeniu strony na tym samym urządzeniu.
-5. Organizator może kliknąć **Pokaż wszystkie pary (organizator)** i potwierdzić ostrzeżenie, by zobaczyć pełną listę przydziałów. Przed przekazaniem telefonu należy użyć **Ukryj wszystkie pary**. Panel pozostaje ukryty po odświeżeniu strony.
+1. Organizator otwiera https://linkerman1.github.io/secretsanta/ **bez dodatkowego fragmentu w adresie**.
+2. Dodaje uczestników (minimum dwie osoby), a potem klika **Losuj i przygotuj linki**.
+3. Aplikacja losuje wszystkich jednocześnie: każdy otrzymuje jednego odbiorcę prezentu, nikt nie trafia na siebie ani nie zostaje przydzielony dwa razy.
+4. Na liście przy każdym imieniu są przyciski **Kopiuj link** oraz (jeśli telefon obsługuje) **Wyślij**. Organizator przesyła **indywidualny** link danej osobie przez komunikator.
+5. Uczestnik otwiera link na swoim telefonie i klika **Odkryj, komu kupujesz prezent**. Widzi tylko swoje imię i jedną wylosowaną osobę.
+6. W razie problemów organizator używa **Pokaż wszystkie pary (organizator)** lub pobiera **Pobierz prywatną kopię losowania (.csv)**.
 
-**Uwaga:** panel organizatora nie ma hasła ani kontroli dostępu. Każda osoba korzystająca z tego samego urządzenia może go otworzyć. Ukrycie wyników jest jedynie zabezpieczeniem przed przypadkowym podejrzeniem.
+**Nie wystarczy rozesłać wszystkim głównego adresu strony.** Każdy uczestnik musi otrzymać oddzielny link wygenerowany po losowaniu.
 
-**Ważne:** Każdy korzystający z tego samego urządzenia może wybrać dowolne imię i podejrzeć jego wynik. Aplikacja nie zapewnia indywidualnych tajnych linków ani synchronizacji między urządzeniami. Do pełnej prywatności potrzebny jest backend lub wysyłanie indywidualnych wyników.
+## Ważne ograniczenia i prywatność
 
-## Publikacja na GitHub Pages
+- Losowanie odbywa się **jednorazowo u organizatora**, przed wysłaniem linków. Uczestnicy odsłaniają gotowe przydziały. To gwarantuje brak powtórek bez współdzielonej bazy danych.
+- **Linki są poufne, ale nie jednorazowe**: każda osoba z danym linkiem może wielokrotnie zobaczyć przypisany wynik. Nie ma logowania ani weryfikacji tożsamości.
+- Treść przydziału w linku jest szyfrowana AES-GCM za pomocą Web Crypto. Klucz znajduje się w fragmencie adresu po znaku `#`; GitHub Pages nie otrzymuje fragmentu URL w żądaniu HTTP. Nie wysyłaj linków publicznie.
+- Uczestnicy nie mogą poznać innych przydziałów na podstawie **samego swojego** linku. Organizator ma jednak dostęp do wszystkich wyników.
+- Lista uczestników, gotowe przydziały i wygenerowane linki są zapisane w **localStorage organizatora** na tym samym urządzeniu/przeglądarce. Nie są zapisywane na GitHubie ani synchronizowane między urządzeniami.
+- **Pobierz kopię CSV i zachowaj ją prywatnie**. W razie utraty danych przeglądarki plik pozwoli odzyskać wszystkie przydziały i wysłane linki. Nie publikuj tego pliku w repozytorium.
+- Jeśli organizator kliknie **Losuj ponownie**, stare linki wciąż będą pokazywały poprzednie przydziały. Trzeba wtedy powiadomić uczestników, że obowiązują **nowe** linki.
+- Dodatkowo zachowano możliwość odkrywania wyników na jednym urządzeniu, jeśli ktoś nie może użyć swojego telefonu.
 
-Repozytorium jest publiczne. Aplikacja ma automatyczny workflow `.github/workflows/deploy.yml`, który publikuje `index.html` w GitHub Pages po pushu na `main` lub ręcznym uruchomieniu.
+## GitHub Pages
 
-**Pierwsze uruchomienie:**
+Repozytorium jest publiczne. Automatyczna publikacja działa przez GitHub Actions (`.github/workflows/deploy.yml`) po każdym wypchnięciu zmian do `main`.
 
-1. Otwórz [Settings → Pages](https://github.com/linkerman1/secretsanta/settings/pages).
-2. W **Build and deployment → Source** wybierz **GitHub Actions** (nie „Deploy from a branch”).
-3. Przejdź do [Actions → Publish Secret Santa to GitHub Pages](https://github.com/linkerman1/secretsanta/actions/workflows/deploy.yml), wybierz **Run workflow**, gałąź **main**, i kliknij zielony **Run workflow**.
-4. Po pomyślnej publikacji witryna będzie dostępna pod adresem: https://linkerman1.github.io/secretsanta/
+Strona: https://linkerman1.github.io/secretsanta/
 
-Przyszłe zmiany w gałęzi `main` będą publikowane automatycznie. Ustawienia Pages wymagają jednorazowej konfiguracji przez osobę mającą dostęp do ustawień repozytorium.
+[Ustawienia Pages](https://github.com/linkerman1/secretsanta/settings/pages) · [Wdrożenia](https://github.com/linkerman1/secretsanta/actions/workflows/deploy.yml)
 
-**Prywatność:** nie zapisuj wyników losowania w publicznym repozytorium. Wyniki są zapisywane lokalnie w pamięci przeglądarki użytkownika, a nie na GitHubie.
+## Uruchomienie lokalne
 
-## Test lokalny
-
-Otwórz `index.html` w przeglądarce lub uruchom `python3 -m http.server 8000` i przejdź na `http://localhost:8000`.
+Zamiast otwierać plik z dysku, uruchom serwer HTTPS lub `python3 -m http.server 8000` i wejdź na `http://localhost:8000`; Web Crypto wymaga bezpiecznego kontekstu (HTTPS lub localhost).
