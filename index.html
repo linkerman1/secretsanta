@@ -1,190 +1,267 @@
-CTYPE html>
+<!doctype html>
 <html lang="pl">
-	<head>
-		  <meta charset="UTF-8">
-		    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		      <title>Secret Santa - Losowanie Prezentu 🎁</title>
-		        <!-- Biblioteka konfetti -->
-			  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-			    <style>
-    :root {
-	          --bg: #0b1329;
-		        --card-bg: #1e293b;
-			      --card-inner: #0f172a;
-			            --primary: #ef4444;
-				          --primary-hover: #dc2626;
-					        --accent: #f59e0b;
-						      --accent-glow: rgba(245, 158, 11, 0.35);
-						            --text: #f8fafc;
-							          --text-muted: #94a3b8;
-								        --border: #334155;
-									    }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101629">
+  <meta name="description" content="Secret Santa — świąteczne losowanie prezentów bez powtórek i bez losowania samego siebie.">
+  <title>Secret Santa 🎁 — Losowanie prezentów</title>
+  <style>
+    :root { color-scheme: dark; --bg: #101629; --card: #1d293e; --panel: #111c30; --border: #39475c; --text: #f5f8ff; --muted: #b7c4d6; --red: #ee4852; --red-dark: #ce3541; --gold: #ffc15b; --blue: #578fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 14px; background: radial-gradient(ellipse at 50% 0, #263052 0, var(--bg) 70%); font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); }
+    .card { width: min(100%, 490px); padding: 30px clamp(18px, 5vw, 34px); background: var(--card); border: 1px solid #ffffff18; border-radius: 24px; box-shadow: 0 22px 60px #0007; }
+    .top { text-align: center; }
+    .eyebrow { display: inline-block; padding: 5px 13px; border-radius: 999px; background: #ee485226; color: #ffc0c3; font-size: .77rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 12px 0 4px; font-size: clamp(1.75rem, 5vw, 2.3rem); line-height: 1.2; }
+    .lead { margin: 0 0 26px; color: var(--muted); font-size: .96rem; }
+    h2 { margin: 0 0 11px; font-size: 1.08rem; }
+    p { margin: 8px 0 15px; }
+    label { display: block; margin-bottom: 8px; font-weight: 650; }
+    .input-row { display: flex; gap: 9px; }
+    input, select { min-width: 0; width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; }
+    input { flex: 1; }
+    input::placeholder { color: #97a8bd; }
+    input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    button { min-height: 44px; border: 0; border-radius: 11px; padding: 11px 16px; font: inherit; font-weight: 740; color: white; cursor: pointer; transition: filter .14s, transform .14s; }
+    button:hover:not(:disabled) { filter: brightness(1.1); }
+    button:active:not(:disabled) { transform: scale(.985); }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    .add { background: var(--blue); flex: 0 0 auto; }
+    .primary { width: 100%; background: var(--red); padding: 15px; margin-top: 17px; font-size: 1.08rem; }
+    .secondary { background: #34445e; }
+    .outline { background: transparent; border: 1px solid var(--border); }
+    .space-between { display: flex; align-items: baseline; justify-content: space-between; margin-top: 22px; gap: 10px; }
+    .count { font-size: .85rem; color: var(--muted); }
+    .participants { display: flex; flex-wrap: wrap; gap: 8px; padding: 13px; min-height: 63px; max-height: 172px; overflow: auto; margin: 0; list-style: none; background: var(--panel); border: 1px solid var(--border); border-radius: 13px; }
+    .participants li { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 8px 6px 12px; background: #33425a; border-radius: 999px; font-size: .91rem; overflow-wrap: anywhere; }
+    .participants .empty { display: block; padding: 6px 3px; background: none; color: var(--muted); }
+    .remove { min-height: 26px; padding: 0 6px; border-radius: 7px; background: transparent; font-size: 1.15rem; line-height: 1; }
+    .info { margin: 12px 0 0; font-size: .86rem; color: var(--muted); }
+    .notice { min-height: 25px; margin: 10px 0 0; color: #ffcd83; font-size: .9rem; }
+    .notice:empty { display: none; }
+    .draw-panel { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); text-align: center; }
+    .draw-panel .gift { font-size: 2.7rem; line-height: 1.2; }
+    .draw-panel h2 { margin: 8px 0; font-size: 1.3rem; }
+    .draw-panel p { color: var(--muted); }
+    .draw-panel label { text-align: left; margin-top: 20px; }
+    .result { margin: 15px 0; padding: 22px 12px; border: 2px solid #dca64a; border-radius: 14px; background: #302a24; }
+    .result small { display: block; color: #f3dbb3; font-size: .9rem; }
+    .result strong { display: block; margin-top: 5px; font-size: clamp(1.4rem, 5vw, 2rem); color: var(--gold); overflow-wrap: anywhere; }
+    .row-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+    .row-actions button { flex: 1; }
+    .foot { text-align: center; margin: 23px 0 0; color: var(--muted); font-size: .8rem; }
+    .hidden { display: none !important; }
+    @media (max-width: 360px) { .card { padding: 23px 16px; } .input-row { flex-wrap: wrap; } .add { width: 100%; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="top">
+      <span class="eyebrow">🎄 Świąteczne losowanie</span>
+      <h1>Secret Santa 🎁</h1>
+      <p class="lead">Każdy przygotowuje jeden prezent, każdy jeden otrzymuje!</p>
+    </header>
 
-        * {
-		      box-sizing: border-box;
-		            margin: 0;
-			          padding: 0;
-				        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-					    }
+    <section id="setup-view" aria-label="Przygotowanie losowania">
+      <form id="add-form" novalidate>
+        <label for="name-input">Dodaj uczestników</label>
+        <div class="input-row">
+          <input id="name-input" type="text" maxlength="40" placeholder="Imię uczestnika" autocomplete="off" required>
+          <button class="add" type="submit">+ Dodaj</button>
+        </div>
+      </form>
+      <div class="space-between">
+        <h2>Lista osób</h2>
+        <span class="count" id="count">0 osób</span>
+      </div>
+      <ul id="participants" class="participants" aria-label="Uczestnicy">
+        <li class="empty">Dodaj co najmniej 2 osoby, by rozpocząć.</li>
+      </ul>
+      <p class="info">Losowanie odbywa się na tym urządzeniu. Każda osoba zobaczy tylko swój wynik na ekranie.</p>
+      <button id="draw-button" type="button" class="primary" disabled>🎲 Rozlosuj prezenty</button>
+    </section>
 
-	    body {
-		          background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 100%);
-			        color: var(--text);
-				      min-height: 100vh;
-				            display: flex;
-					          justify-content: center;
-						        align-items: center;
-							      padding: 16px;
-							          }
+    <section id="draw-view" class="hidden" aria-label="Wyniki losowania">
+      <div class="draw-panel">
+        <div class="gift" aria-hidden="true">🎁</div>
+        <h2>Losowanie gotowe!</h2>
+        <p>Podaj urządzenie kolejnej osobie. Wybierz swoje imię i sprawdź, komu kupujesz prezent.</p>
+        <label for="person-select">Kim jesteś?</label>
+        <select id="person-select"><option value="">— Wybierz swoje imię —</option></select>
+        <button id="reveal-button" type="button" class="primary" disabled>🔐 Pokaż mój wynik</button>
+        <div id="result" class="result hidden" aria-live="polite">
+          <small>Przygotowujesz prezent dla:</small>
+          <strong id="recipient-name"></strong>
+        </div>
+        <button id="hide-button" type="button" class="secondary hidden">🙈 Ukryj wynik i przekaż telefon</button>
+      </div>
+      <div class="row-actions">
+        <button id="restart-button" class="outline" type="button">↻ Losuj ponownie / zmień listę</button>
+      </div>
+    </section>
+    <p id="message" class="notice" role="status" aria-live="polite"></p>
+    <p class="foot">Bez konta, bez serwera. Wyniki są zapisane tylko w tej przeglądarce.</p>
+  </main>
 
-	        .card {
-			      background: var(--card-bg);
-			            border: 1px solid rgba(255, 255, 255, 0.08);
-				          border-radius: 20px;
-					        width: 100%;
-						      max-width: 440px;
-						            padding: 28px 24px;
-							          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-								        text-align: center;
-									    }
+  <script>
+    (() => {
+      'use strict';
+      const storageKey = 'secret-santa-v1';
+      const $ = (id) => document.getElementById(id);
+      const elements = {
+        setup: $('setup-view'), draw: $('draw-view'), form: $('add-form'), input: $('name-input'),
+        people: $('participants'), count: $('count'), drawButton: $('draw-button'),
+        select: $('person-select'), reveal: $('reveal-button'), result: $('result'),
+        recipient: $('recipient-name'), hide: $('hide-button'), restart: $('restart-button'), message: $('message')
+      };
+      let participants = [];
+      let assignments = null;
 
-		    .badge {
-			          display: inline-block;
-				        font-size: 0.8rem;
-					      letter-spacing: 0.05em;
-					            text-transform: uppercase;
-						          font-weight: 700;
-							        padding: 4px 12px;
-								      border-radius: 999px;
-								            background: rgba(239, 68, 68, 0.2);
-									          color: #fca5a5;
-										        margin-bottom: 12px;
-											    }
+      function load() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+          if (!saved || !Array.isArray(saved.participants)) return;
+          const names = saved.participants;
+          if (names.length > 100 || names.some(n => typeof n !== 'string' || !n.trim() || n.length > 40)) return;
+          if (new Set(names.map(n => n.toLocaleLowerCase('pl'))).size !== names.length) return;
+          participants = names;
+          const a = saved.assignments;
+          if (Array.isArray(a) && a.length === names.length && names.length >= 2 &&
+              new Set(a).size === a.length && a.every((n, i) => names.includes(n) && n !== names[i])) {
+            assignments = a;
+          }
+        } catch (_) { /* Storage may be disabled: the app still works in memory. */ }
+      }
 
-		        h1 {
-				      font-size: 1.8rem;
-				            font-weight: 800;
-					          margin-bottom: 6px;
-						      }
+      function save() {
+        try { localStorage.setItem(storageKey, JSON.stringify({participants, assignments})); }
+        catch (_) { /* In private mode, use this tab only. */ }
+      }
 
-			    p.desc {
-				          font-size: 0.95rem;
-					        color: var(--text-muted);
-						      margin-bottom: 22px;
-						          }
+      function message(text = '') { elements.message.textContent = text; }
 
-			        .input-box {
-					      display: flex;
-					            gap: 8px;
-						          margin-bottom: 14px;
-							      }
+      function countLabel(n) {
+        if (n === 1) return '1 osoba';
+        const end = n % 10;
+        return ((end >= 2 && end <= 4) && (n % 100 < 12 || n % 100 > 14)) ? `${n} osoby` : `${n} osób`;
+      }
 
-				    input[type="text"] {
-					          flex: 1;
-						        background: var(--card-inner);
-							      border: 1px solid var(--border);
-							            border-radius: 10px;
-								          padding: 12px 14px;
-									        font-size: 0.95rem;
-										      color: var(--text);
-										            outline: none;
-											          transition: border-color 0.2s;
-												      }
+      function render() {
+        const isDrawn = Boolean(assignments);
+        elements.setup.classList.toggle('hidden', isDrawn);
+        elements.draw.classList.toggle('hidden', !isDrawn);
+        elements.count.textContent = countLabel(participants.length);
+        elements.drawButton.disabled = participants.length < 2;
+        elements.people.replaceChildren();
+        if (!participants.length) {
+          const li = document.createElement('li');
+          li.className = 'empty';
+          li.textContent = 'Dodaj co najmniej 2 osoby, by rozpocząć.';
+          elements.people.append(li);
+        }
+        participants.forEach((name, index) => {
+          const li = document.createElement('li');
+          const label = document.createElement('span');
+          label.textContent = name;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'remove';
+          button.textContent = '×';
+          button.setAttribute('aria-label', `Usuń ${name}`);
+          button.dataset.index = index;
+          li.append(label, button);
+          elements.people.append(li);
+        });
+        elements.select.replaceChildren();
+        const prompt = new Option('— Wybierz swoje imię —', '');
+        elements.select.add(prompt);
+        participants.forEach((name, i) => elements.select.add(new Option(name, String(i))));
+        conceal();
+      }
 
-				        input[type="text"]:focus {
-						      border-color: var(--primary);
-						          }
+      // Random derangement: no one gets themselves, everyone is assigned once.
+      function drawAssignments(names) {
+        const n = names.length;
+        if (n < 2) throw new Error('Dodaj co najmniej dwie osoby.');
+        const indices = Array.from({length: n}, (_, i) => i);
+        let valid = false;
+        while (!valid) {
+          for (let i = n - 1; i > 0; i--) {
+            const random = new Uint32Array(1);
+            crypto.getRandomValues(random);
+            const j = random[0] % (i + 1);
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+          }
+          valid = indices.every((value, i) => value !== i);
+        }
+        return indices.map(i => names[i]);
+      }
 
-					    button.btn-add {
-						          background: #3b82f6;
-							        color: #fff;
-								      border: none;
-								            border-radius: 10px;
-									          padding: 0 18px;
-										        font-size: 0.95rem;
-											      font-weight: 600;
-											            cursor: pointer;
-												          transition: background 0.2s;
-													      }
+      function conceal() {
+        elements.result.classList.add('hidden');
+        elements.hide.classList.add('hidden');
+        elements.recipient.textContent = '';
+        elements.reveal.classList.remove('hidden');
+        elements.select.disabled = false;
+        elements.select.value = '';
+        elements.reveal.disabled = true;
+      }
 
-					        button.btn-add:hover {
-							      background: #2563eb;
-							          }
+      elements.form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const name = elements.input.value.trim().replace(/\s+/g, ' ');
+        if (!name) { message('Wpisz imię uczestnika.'); elements.input.focus(); return; }
+        if (name.length > 40) { message('Imię może mieć maksymalnie 40 znaków.'); return; }
+        if (participants.length >= 100) { message('Limit: 100 uczestników.'); return; }
+        if (participants.some(p => p.toLocaleLowerCase('pl') === name.toLocaleLowerCase('pl'))) {
+          message('Ta osoba jest już na liście.'); return;
+        }
+        participants.push(name);
+        elements.input.value = '';
+        save(); render(); message(''); elements.input.focus();
+      });
 
-						    .list {
-							          display: flex;
-								        flex-wrap: wrap;
-									      gap: 6px;
-									            min-height: 40px;
-										          max-height: 110px;
-											        overflow-y: auto;
-												      margin-bottom: 20px;
-												            padding: 4px;
-													        }
+      elements.people.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-index]');
+        if (!button) return;
+        participants.splice(Number(button.dataset.index), 1);
+        assignments = null;
+        save(); render(); message('');
+      });
 
-						        .item-tag {
-								      display: inline-flex;
-								            align-items: center;
-									          gap: 6px;
-										        background: #334155;
-											      color: #e2e8f0;
-											            padding: 4px 10px;
-												          border-radius: 14px;
-													        font-size: 0.85rem;
-														    }
+      elements.drawButton.addEventListener('click', () => {
+        try {
+          assignments = drawAssignments(participants);
+          save(); render(); message('Losowanie zakończone. Nie pokazuj innym swojego wyniku!');
+        } catch (_) { message('Nie udało się przeprowadzić losowania. Spróbuj ponownie.'); }
+      });
 
-							    .item-tag button {
-								          background: transparent;
-									        border: none;
-										      color: #cbd5e1;
-										            font-size: 1rem;
-											          line-height: 1;
-												        cursor: pointer;
-													    }
+      elements.select.addEventListener('change', () => {
+        elements.reveal.disabled = elements.select.value === '';
+      });
 
-							        .item-tag button:hover {
-									      color: var(--primary);
-									          }
+      elements.reveal.addEventListener('click', () => {
+        const index = Number(elements.select.value);
+        if (!assignments || elements.select.value === '' || !Number.isInteger(index) || index < 0 || index >= participants.length) return;
+        elements.recipient.textContent = assignments[index];
+        elements.result.classList.remove('hidden');
+        elements.reveal.classList.add('hidden');
+        elements.hide.classList.remove('hidden');
+        elements.select.disabled = true;
+        message('Zapamiętaj imię, a potem ukryj wynik.');
+      });
 
-								    .display-box {
-									          background: var(--card-inner);
-										        border: 2px dashed var(--border);
-											      border-radius: 14px;
-											            padding: 24px 16px;
-												          margin-bottom: 20px;
-													        min-height: 120px;
-														      display: flex;
-														            flex-direction: column;
-															          justify-content: center;
-																        align-items: center;
-																	      transition: all 0.3s ease;
-																	          }
+      elements.hide.addEventListener('click', () => { conceal(); message('Wynik ukryty. Możesz przekazać urządzenie dalej.'); });
+      elements.restart.addEventListener('click', () => {
+        if (!window.confirm('Usunąć wyniki losowania? Uczestnicy pozostaną na liście.')) return;
+        assignments = null;
+        save(); render(); message('Możesz zmienić listę lub wykonać nowe losowanie.');
+      });
 
-								        .display-box.winner {
-										      border-style: solid;
-										            border-color: var(--accent);
-											          box-shadow: 0 0 25px var(--accent-glow);
-												      }
-
-									    .icon {
-										          font-size: 2.2rem;
-											        margin-bottom: 6px;
-												    }
-
-									        .result {
-											      font-size: 1.35rem;
-											            font-weight: 700;
-												          color: var(--accent);
-													        min-height: 1.6em;
-														    }
-
-										    .btn-roll {
-											          width: 100%;
-												        background: var(--primary);
-													      color: white;
-													            border: none;
-														          border-radius: 12px;
-															        padding: 16px;
-																      font-size: 1.1rem;
-																            font-weigh
-
+      load(); render();
+    })();
+  </script>
+</body>
+</html>
