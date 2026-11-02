@@ -8,6 +8,9 @@ Prosta aplikacja do losowania świątecznych prezentów po polsku. Działa bez s
 2. Kliknij **Rozlosuj prezenty**. Każdy dostanie dokładnie jedną osobę i nikt nie wylosuje samego siebie.
 3. Przekazuj urządzenie kolejnym osobom. Każdy wybiera swoje imię, sprawdza wynik i klika **Ukryj wynik** przed przekazaniem telefonu.
 4. Wyniki i lista są przechowywane lokalnie w pamięci przeglądarki (`localStorage`). Można wrócić do nich po odświeżeniu strony na tym samym urządzeniu.
+5. Organizator może kliknąć **Pokaż wszystkie pary (organizator)** i potwierdzić ostrzeżenie, by zobaczyć pełną listę przydziałów. Przed przekazaniem telefonu należy użyć **Ukryj wszystkie pary**. Panel pozostaje ukryty po odświeżeniu strony.
+
+**Uwaga:** panel organizatora nie ma hasła ani kontroli dostępu. Każda osoba korzystająca z tego samego urządzenia może go otworzyć. Ukrycie wyników jest jedynie zabezpieczeniem przed przypadkowym podejrzeniem.
 
 **Ważne:** Każdy korzystający z tego samego urządzenia może wybrać dowolne imię i podejrzeć jego wynik. Aplikacja nie zapewnia indywidualnych tajnych linków ani synchronizacji między urządzeniami. Do pełnej prywatności potrzebny jest backend lub wysyłanie indywidualnych wyników.
 
