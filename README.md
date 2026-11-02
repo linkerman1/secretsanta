@@ -8,12 +8,13 @@ Wersja działa jako statyczna strona **GitHub Pages**, bez kont, osobnej bazy da
 
 1. Wejdź na **główny adres** (bez `#room=`) na swoim telefonie lub komputerze.
 2. Dodaj 2–24 uczestników. Imiona muszą być unikalne.
-3. Kliknij **Rozlosuj prezenty**. Każdy dostanie dokładnie jedną osobę; nikt nie trafi na siebie, nie będzie powtórek.
-4. Zobaczysz **jeden wspólny link**. Skopiuj go i wyślij całej grupie (np. na Messengerze). To nie jest po prostu adres strony głównej: kończy się długim kodem `#room=...`, zawierającym zaszyfrowane wyniki.
-5. Każdy uczestnik otrzymuje **osobny 16-cyfrowy PIN**. Wyślij mu ten PIN **prywatnie** (lub podaj osobiście). Nigdy nie publikuj listy PIN-ów na grupie.
-6. Pobierz **prywatną kopię .json** — przywraca przydziały i PIN-y, jeśli wyczyścisz przeglądarkę. Możesz też pobrać CSV z listą par i kodów.
+3. Aplikacja automatycznie odmienia imiona w wynikach (np. **Kasia → dla Kasi**, **Piotr → dla Piotra**, **Ania → dla Ani**). W razie nietypowego imienia kliknij **✏️** przy osobie i popraw formę po słowie „dla”, **zanim** rozpoczniesz losowanie.
+4. Kliknij **Rozlosuj prezenty**. Każdy dostanie dokładnie jedną osobę; nikt nie trafi na siebie, nie będzie powtórek. Przy większej grupie szyfrowanie może potrwać kilka chwil — widoczny jest postęp 1/N, 2/N itd.
+5. Zobaczysz **jeden wspólny link**. Skopiuj go i wyślij całej grupie (np. na Messengerze). To nie jest po prostu adres strony głównej: kończy się długim kodem `#room=...`, zawierającym zaszyfrowane wyniki.
+6. Każdy uczestnik otrzymuje **osobny 16-cyfrowy PIN**. Wyślij mu ten PIN **prywatnie** (lub podaj osobiście). Nigdy nie publikuj listy PIN-ów na grupie.
+7. Pobierz **prywatną kopię .json** — przywraca przydziały i PIN-y, jeśli wyczyścisz przeglądarkę. Możesz też pobrać CSV z listą par i kodów.
 
-Uczestnik otwiera **ten sam wspólny link** na swoim urządzeniu, wybiera swoje imię, wpisuje PIN i klika **Odkryj mój wynik**. Widzi tylko przypisaną mu osobę.
+Uczestnik otwiera **ten sam wspólny link** na swoim urządzeniu, wybiera swoje imię, **wkleja PIN** (może być zapisany w grupach oddzielonych spacją lub myślnikiem) i klika **Odkryj mój wynik**. Widzi tylko przypisaną mu osobę.
 
 ## Co chroni prywatność?
 
@@ -23,6 +24,13 @@ Uczestnik otwiera **ten sam wspólny link** na swoim urządzeniu, wybiera swoje 
 - Organizator dysponuje wszystkimi przydziałami i PIN-ami w **localStorage** swojego urządzenia i może je podejrzeć. Każda osoba z dostępem do urządzenia organizatora lub prywatnego pliku kopii również może je zobaczyć.
 - Wspólny link i PIN można otworzyć wielokrotnie. **Nowe losowanie nie unieważnia poprzedniego linku** — po losowaniu na nowo poinformuj wszystkich, że stare przydziały nie obowiązują.
 - Bez odrębnej bazy nie da się wymusić jednokrotnego otwarcia, śledzić kto już zajrzał, odzyskać zgubionego PIN-u bez organizatora ani odebrać dostępu do starego linku.
+
+## Gdy link lub PIN nie działa
+
+- PIN składa się z **16 cyfr**. Nie musisz przepisywać go ręcznie: organizator może skopiować PIN jednym przyciskiem, a uczestnik może go wkleić do pola również z myślnikami lub spacjami.
+- Przy pierwszym losowaniu szyfrowanie może wyglądać na wolne na starszym telefonie. Interfejs pokazuje postęp przygotowywania wyników.
+- **Jeśli po otwarciu wspólnego linku widać ekran „Przygotuj losowanie” zamiast pola z PIN-em**, komunikator prawdopodobnie uciął długą końcówkę linku. Poproś organizatora o skopiowanie pełnego adresu z **#room=…** i wysłanie go bez skracania.
+- Jeżeli organizator ponownie rozlosuje prezenty, stary link z poprzedniego losowania nadal istnieje — do nowego losowania używaj tylko nowego wspólnego linku i nowych PIN-ów.
 
 ## Kopie zapasowe
 
