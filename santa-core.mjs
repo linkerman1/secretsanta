@@ -66,7 +66,7 @@ export function polishGenitive(fullName) {
   if (!name) return '';
   const [first, ...rest] = name.split(/\s+/);
   const lookup = first.toLocaleLowerCase('pl');
-  let declined = GENITIVE[lookup];
+  let declined = Object.prototype.hasOwnProperty.call(GENITIVE,lookup) ? GENITIVE[lookup] : undefined;
   if (!declined) {
     if (/ek$/i.test(first)) declined = first.slice(0,-2) + 'ka';
     else if (/(k|g)a$/i.test(first)) declined = first.slice(0,-1) + 'i';
@@ -191,45 +191,6 @@ export async function unlockDetails(room, name, pin) {
 
 export async function unlock(room, name, pin) {
   return (await unlockDetails(room, name, pin)).recipient;
-}
-
-export function backupIsValid(backup) {
-  if (!backup || backup.v !== 1 || !Array.isArray(backup.names) || !Array.isArray(backup.pins) ||
-    !Array.isArray(backup.recipients) || !backup.room) return false;
-  try { normalizeNames(backup.names); validateRoom(backup.room); }
-  catch (_) { return false; }
-  return backup.names.length === backup.pins.length &&
-    backup.names.length === backup.recipients.length &&
-    backup.names.length === backup.room.entries.length &&
-    backup.names.every((name,i) =>
-      backup.room.entries[i].name === name &&
-      typeof backup.pins[i] === 'string' &&
-      new RegExp('^[0-9]{' + PIN_LENGTH + '}$').test(backup.pins[i]) &&
-      typeof backup.recipients[i] === 'string' &&
-      backup.recipients[i] !== name &&
-      backup.names.includes(backup.recipients[i])
-    ) &&
-    new Set(backup.recipients).size === backup.names.length;
-}
-).test(code)) {
-    throw new Error('Wpisz ' + PIN_LENGTH + '-cyfrowy PIN.');
-  }
-  const entry = room.entries.find(e => e.name === name);
-  if (!entry) throw new Error('Nie ma takiego uczestnika.');
-  try {
-    const key = await keyForPin(pin, unbase64url(entry.salt));
-    const data = await crypto.subtle.decrypt(
-      {name: 'AES-GCM', iv: unbase64url(entry.iv)},
-      key, unbase64url(entry.cipher)
-    );
-    const payload = JSON.parse(dec.decode(data));
-    if (typeof payload.to !== 'string' || !room.entries.some(e => e.name === payload.to) || payload.to === name) {
-      throw new Error('Nieprawidłowy przydział.');
-    }
-    return payload.to;
-  } catch (_) {
-    throw new Error('Błędny PIN lub uszkodzony link.');
-  }
 }
 
 export function backupIsValid(backup) {
