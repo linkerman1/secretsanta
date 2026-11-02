@@ -16,12 +16,18 @@ Prosta aplikacja do losowania świątecznych prezentów po polsku. Działa bez s
 
 ## Publikacja na GitHub Pages
 
-1. Otwórz repozytorium na GitHub: **Settings → Pages**.
-2. W sekcji **Build and deployment**, w polu **Source**, wybierz **Deploy from a branch**.
-3. Wybierz gałąź **main** i katalog **/(root)**, a następnie kliknij **Save**.
-4. Adres strony będzie mieć postać: https://linkerman1.github.io/secretsanta/
+Repozytorium jest publiczne. Aplikacja ma automatyczny workflow `.github/workflows/deploy.yml`, który publikuje `index.html` w GitHub Pages po pushu na `main` lub ręcznym uruchomieniu.
 
-Repozytorium jest obecnie prywatne. Publikacja GitHub Pages z prywatnego repozytorium wymaga kwalifikującego się planu GitHub (np. Pro). Na planie Free alternatywą jest udostępnienie kodu w publicznym repozytorium. Wyniki losowania nie są przesyłane do GitHuba.
+**Pierwsze uruchomienie:**
+
+1. Otwórz [Settings → Pages](https://github.com/linkerman1/secretsanta/settings/pages).
+2. W **Build and deployment → Source** wybierz **GitHub Actions** (nie „Deploy from a branch”).
+3. Przejdź do [Actions → Publish Secret Santa to GitHub Pages](https://github.com/linkerman1/secretsanta/actions/workflows/deploy.yml), wybierz **Run workflow**, gałąź **main**, i kliknij zielony **Run workflow**.
+4. Po pomyślnej publikacji witryna będzie dostępna pod adresem: https://linkerman1.github.io/secretsanta/
+
+Przyszłe zmiany w gałęzi `main` będą publikowane automatycznie. Ustawienia Pages wymagają jednorazowej konfiguracji przez osobę mającą dostęp do ustawień repozytorium.
+
+**Prywatność:** nie zapisuj wyników losowania w publicznym repozytorium. Wyniki są zapisywane lokalnie w pamięci przeglądarki użytkownika, a nie na GitHubie.
 
 ## Test lokalny
 
