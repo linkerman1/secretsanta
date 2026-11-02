@@ -41,6 +41,44 @@ export function normalizeNames(names) {
   return clean;
 }
 
+// Genitive (dopełniacz) for the phrase "prezent dla…"; exceptions can be edited.
+const GENITIVE = Object.freeze({
+  ada:'Ady', adam:'Adama', agnieszka:'Agnieszki', ala:'Ali', alicja:'Alicji',
+  amelia:'Amelii', ania:'Ani', anna:'Anny', asia:'Asi', basia:'Basi',
+  bartek:'Bartka', bartosz:'Bartosza', celina:'Celiny', daniel:'Daniela',
+  dawid:'Dawida', dominika:'Dominiki', ewa:'Ewy', filip:'Filipa',
+  gosia:'Gosi', grzegorz:'Grzegorza', iga:'Igi', igor:'Igora',
+  jakub:'Jakuba', jan:'Jana', julia:'Julii', kacper:'Kacpra',
+  kamil:'Kamila', karol:'Karola', karolina:'Karoliny', kasia:'Kasi',
+  katarzyna:'Katarzyny', krzysztof:'Krzysztofa', kuba:'Kuby',
+  łukasz:'Łukasza', maciej:'Macieja', magda:'Magdy', maja:'Mai',
+  marcin:'Marcina', marek:'Marka', maria:'Marii', marta:'Marty',
+  mateusz:'Mateusza', michał:'Michała', mikołaj:'Mikołaja',
+  milena:'Mileny', monika:'Moniki', natalia:'Natalii', ola:'Oli',
+  olga:'Olgi', oliwia:'Oliwii', oskar:'Oskara', patrycja:'Patrycji',
+  paweł:'Pawła', piotr:'Piotra', rafał:'Rafała', robert:'Roberta',
+  szymon:'Szymona', tomek:'Tomka', tomasz:'Tomasza', wojciech:'Wojciecha',
+  wojtek:'Wojtka', zosia:'Zosi', zuzia:'Zuzi', zuzana:'Zuzany'
+});
+export function polishGenitive(fullName) {
+  if (typeof fullName !== 'string') return '';
+  const name = fullName.trim();
+  if (!name) return '';
+  const [first, ...rest] = name.split(/\s+/);
+  const lookup = first.toLocaleLowerCase('pl');
+  let declined = GENITIVE[lookup];
+  if (!declined) {
+    if (/ek$/i.test(first)) declined = first.slice(0,-2) + 'ka';
+    else if (/(k|g)a$/i.test(first)) declined = first.slice(0,-1) + 'i';
+    else if (/ia$/i.test(first)) declined = first.slice(0,-1) + 'i';
+    else if (/a$/i.test(first)) declined = first.slice(0,-1) + 'y';
+    else if (/[bcćdfghjklłmnńprsśtwzźż]$/i.test(first)) declined = first + 'a';
+    else declined = first;
+  }
+  if (first[0] === first[0].toLocaleLowerCase('pl')) declined = declined[0].toLocaleLowerCase('pl') + declined.slice(1);
+  return [declined, ...rest].join(' ');
+}
+
 export function drawRecipients(names) {
   const n = normalizeNames(names).length;
   // A random single cycle is a derangement: no one draws themselves.
@@ -73,8 +111,10 @@ async function keyForPin(pin, salt) {
   );
 }
 
-export async function createRoom(names) {
+export async function createRoom(names, options = {}) {
   const people = normalizeNames(names);
+  const genitives = options.genitives || {};
+  const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
   if (!crypto?.subtle) throw new Error('Otwórz stronę przez HTTPS.');
   const recipients = drawRecipients(people);
   const entries = [];
@@ -84,10 +124,14 @@ export async function createRoom(names) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const key = await keyForPin(pin, salt);
-    const payload = enc.encode(JSON.stringify({to: recipients[i]}));
+    const custom = genitives[recipients[i]];
+    const forName = typeof custom === 'string' && custom.trim().length && custom.trim().length <= 70
+      ? custom.trim() : polishGenitive(recipients[i]);
+    const payload = enc.encode(JSON.stringify({to: recipients[i], forName}));
     const encrypted = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, payload));
     pins.push(pin);
     entries.push({name: people[i], salt: base64url(salt), iv: base64url(iv), cipher: base64url(encrypted)});
+    if (onProgress) onProgress(i + 1, people.length);
   }
   return {room: {v: 1, entries}, pins, recipients, names: people};
 }
@@ -112,16 +156,60 @@ export function validateRoom(room) {
     if (typeof entry.salt !== 'string' || typeof entry.iv !== 'string' || typeof entry.cipher !== 'string') {
       throw new Error('Nieprawidłowy link.');
     }
-    if (entry.salt.length !== 22 || entry.iv.length !== 16 || entry.cipher.length < 24 || entry.cipher.length > 250) {
+    if (entry.salt.length !== 22 || entry.iv.length !== 16 || entry.cipher.length < 24 || entry.cipher.length > 500) {
       throw new Error('Nieprawidłowe dane losowania.');
     }
   }
   return room;
 }
 
-export async function unlock(room, name, pin) {
+export async function unlockDetails(room, name, pin) {
   validateRoom(room);
-  if (typeof pin !== 'string' || !new RegExp('^[0-9]{' + PIN_LENGTH + '}$').test(pin)) {
+  const code = typeof pin === 'string' ? pin.replace(/[\s-]/g, '') : '';
+  if (!new RegExp('^[0-9]{' + PIN_LENGTH + '}
+  const entry = room.entries.find(e => e.name === name);
+  if (!entry) throw new Error('Nie ma takiego uczestnika.');
+  try {
+    const key = await keyForPin(code, unbase64url(entry.salt));
+    const data = await crypto.subtle.decrypt(
+      {name: 'AES-GCM', iv: unbase64url(entry.iv)},
+      key, unbase64url(entry.cipher)
+    );
+    const payload = JSON.parse(dec.decode(data));
+    if (typeof payload.to !== 'string' || !room.entries.some(e => e.name === payload.to) || payload.to === name) {
+      throw new Error('Nieprawidłowy przydział.');
+    }
+    return {recipient: payload.to,
+      forName: typeof payload.forName === 'string' && payload.forName.trim().length > 0 && payload.forName.length <= 70
+        ? payload.forName : polishGenitive(payload.to)};
+  } catch (_) {
+    throw new Error('Błędny PIN lub uszkodzony link.');
+  }
+}
+
+export async function unlock(room, name, pin) {
+  return (await unlockDetails(room, name, pin)).recipient;
+}
+
+export function backupIsValid(backup) {
+  if (!backup || backup.v !== 1 || !Array.isArray(backup.names) || !Array.isArray(backup.pins) ||
+    !Array.isArray(backup.recipients) || !backup.room) return false;
+  try { normalizeNames(backup.names); validateRoom(backup.room); }
+  catch (_) { return false; }
+  return backup.names.length === backup.pins.length &&
+    backup.names.length === backup.recipients.length &&
+    backup.names.length === backup.room.entries.length &&
+    backup.names.every((name,i) =>
+      backup.room.entries[i].name === name &&
+      typeof backup.pins[i] === 'string' &&
+      new RegExp('^[0-9]{' + PIN_LENGTH + '}$').test(backup.pins[i]) &&
+      typeof backup.recipients[i] === 'string' &&
+      backup.recipients[i] !== name &&
+      backup.names.includes(backup.recipients[i])
+    ) &&
+    new Set(backup.recipients).size === backup.names.length;
+}
+).test(code)) {
     throw new Error('Wpisz ' + PIN_LENGTH + '-cyfrowy PIN.');
   }
   const entry = room.entries.find(e => e.name === name);
