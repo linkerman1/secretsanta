@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
-globalThis.crypto = webcrypto;
+if (!globalThis.crypto?.subtle) Object.defineProperty(globalThis, 'crypto', {value: webcrypto, configurable: true});
 
 import {MAX_PARTICIPANTS, PIN_LENGTH, normalizeNames, drawRecipients, newPin, createRoom, encodeRoom, decodeRoom, unlock, backupIsValid} from './santa-core.mjs';
 
