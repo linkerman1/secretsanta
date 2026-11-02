@@ -166,7 +166,9 @@ export function validateRoom(room) {
 export async function unlockDetails(room, name, pin) {
   validateRoom(room);
   const code = typeof pin === 'string' ? pin.replace(/[\s-]/g, '') : '';
-  if (!new RegExp('^[0-9]{' + PIN_LENGTH + '}
+  if (!new RegExp('^[0-9]{' + PIN_LENGTH + '}$').test(code)) {
+    throw new Error('Wpisz ' + PIN_LENGTH + '-cyfrowy PIN.');
+  }
   const entry = room.entries.find(e => e.name === name);
   if (!entry) throw new Error('Nie ma takiego uczestnika.');
   try {
