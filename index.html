@@ -60,6 +60,20 @@
     .pairs .giver { font-weight: 700; }
     .pairs .recipient { color: var(--gold); font-weight: 700; }
     .organizer-hide { width: 100%; }
+    .share-panel { background: #101c30; border: 1px solid #576681; border-radius: 17px; padding: 19px; margin-bottom: 20px; }
+    .share-panel h2 { font-size: 1.28rem; }
+    .share-panel p { color: var(--muted); font-size: .92rem; }
+    .share-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
+    .share-list li { background: #26364e; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 9px; justify-content: space-between; flex-wrap: wrap; }
+    .share-name { font-weight: 700; overflow-wrap: anywhere; flex: 1; min-width: 95px; }
+    .share-actions { display: flex; gap: 7px; }
+    .share-copy { background: #477bea; font-size: .86rem; padding: 8px 11px; }
+    .share-send { background: #3a566c; font-size: .86rem; padding: 8px 11px; }
+    .share-note { font-size: .81rem !important; }
+    .guest-content { text-align: center; }
+    .guest-person { font-size: 1.45rem; font-weight: 800; color: var(--gold); margin: 10px 0; overflow-wrap: anywhere; }
+    .guest-error { color: #ffce91; }
+    .backup-button { width: 100%; margin-top: 12px; }
     .foot { text-align: center; margin: 23px 0 0; color: var(--muted); font-size: .8rem; }
     .hidden { display: none !important; }
     @media (max-width: 360px) { .card { padding: 23px 16px; } .input-row { flex-wrap: wrap; } .add { width: 100%; } }
@@ -89,15 +103,21 @@
       <ul id="participants" class="participants" aria-label="Uczestnicy">
         <li class="empty">Dodaj co najmniej 2 osoby, by rozpocząć.</li>
       </ul>
-      <p class="info">Losowanie odbywa się na tym urządzeniu. Każda osoba zobaczy tylko swój wynik na ekranie.</p>
-      <button id="draw-button" type="button" class="primary" disabled>🎲 Rozlosuj prezenty</button>
+      <p class="info">Przydziel osoby raz, a potem wyślij każdemu jego indywidualny link. Każdy odkryje wynik na własnym telefonie.</p>
+      <button id="draw-button" type="button" class="primary" disabled>🎲 Losuj i przygotuj linki</button>
     </section>
 
     <section id="draw-view" class="hidden" aria-label="Wyniki losowania">
+      <section class="share-panel" aria-label="Linki do wysłania">
+        <h2>📨 Wyślij każdemu prywatny link</h2>
+        <p>Każdy dostaje inny link i klika „Odkryj prezent” na swoim telefonie. Pary są już rozlosowane, więc nikt nie trafi na siebie.</p>
+        <ul class="share-list" id="share-list" aria-label="Indywidualne linki dla uczestników"><li>Tworzę linki…</li></ul>
+        <p class="share-note">Nie wysyłaj wszystkim tego samego linku. Zachowaj tę stronę na swoim urządzeniu — wyniki są zapisane tylko tutaj.</p>
+      </section>
       <div class="draw-panel">
         <div class="gift" aria-hidden="true">🎁</div>
-        <h2>Losowanie gotowe!</h2>
-        <p>Podaj urządzenie kolejnej osobie. Wybierz swoje imię i sprawdź, komu kupujesz prezent.</p>
+        <h2>Lub sprawdź wynik tutaj</h2>
+        <p>Opcja dodatkowa, gdy ktoś nie może otworzyć swojego linku. Pamiętaj, aby ukryć wynik przed kolejną osobą.</p>
         <label for="person-select">Kim jesteś?</label>
         <select id="person-select"><option value="">— Wybierz swoje imię —</option></select>
         <button id="reveal-button" type="button" class="primary" disabled>🔐 Pokaż mój wynik</button>
@@ -114,10 +134,27 @@
           <p class="organizer-warning">Uwaga! Poniżej widać całe losowanie. Ukryj tę listę przed przekazaniem telefonu.</p>
           <ol id="all-pairs" class="pairs" aria-label="Wszystkie pary w losowaniu"></ol>
           <button id="organizer-hide" type="button" class="secondary organizer-hide">🙈 Ukryj wszystkie pary</button>
+          <button id="backup-button" type="button" class="outline backup-button">⬇ Pobierz prywatną kopię losowania (.csv)</button>
         </div>
       </section>
       <div class="row-actions">
         <button id="restart-button" class="outline" type="button">↻ Losuj ponownie / zmień listę</button>
+      </div>
+    </section>
+    <section id="guest-view" class="hidden guest-content" aria-label="Indywidualne losowanie">
+      <div class="draw-panel">
+        <div class="gift" aria-hidden="true">🎄</div>
+        <h2>Twój tajemniczy Mikołaj 🎁</h2>
+        <p>Ten link został przygotowany specjalnie dla Ciebie.</p>
+        <p class="guest-person" id="guest-name"></p>
+        <button id="guest-reveal" class="primary" type="button" disabled>🎁 Odkryj, komu kupujesz prezent</button>
+        <div id="guest-result" class="result hidden" aria-live="polite">
+          <small>Przygotowujesz prezent dla:</small>
+          <strong id="guest-recipient"></strong>
+        </div>
+        <button id="guest-hide" class="secondary hidden" type="button">🙈 Ukryj wynik</button>
+        <p id="guest-error" class="guest-error hidden" role="alert"></p>
+        <p class="info">Możesz wrócić do tego samego linku, jeśli zapomnisz wyniku. Zachowaj go dla siebie.</p>
       </div>
     </section>
     <p id="message" class="notice" role="status" aria-live="polite"></p>
@@ -135,10 +172,16 @@
         select: $('person-select'), reveal: $('reveal-button'), result: $('result'),
         recipient: $('recipient-name'), hide: $('hide-button'), restart: $('restart-button'), message: $('message'),
         organizerToggle: $('organizer-toggle'), organizerResults: $('organizer-results'),
-        organizerHide: $('organizer-hide'), allPairs: $('all-pairs')
+        organizerHide: $('organizer-hide'), allPairs: $('all-pairs'),
+        shareList: $('share-list'), backup: $('backup-button'), guest: $('guest-view'),
+        guestName: $('guest-name'), guestReveal: $('guest-reveal'), guestResult: $('guest-result'),
+        guestRecipient: $('guest-recipient'), guestHide: $('guest-hide'), guestError: $('guest-error')
       };
       let participants = [];
       let assignments = null;
+      let shareLinks = null;
+      let generatingLinks = false;
+      let guestAssignment = null;
 
       function load() {
         try {
@@ -152,12 +195,16 @@
           if (Array.isArray(a) && a.length === names.length && names.length >= 2 &&
               new Set(a).size === a.length && a.every((n, i) => names.includes(n) && n !== names[i])) {
             assignments = a;
+            if (Array.isArray(saved.shareLinks) && saved.shareLinks.length === names.length &&
+                saved.shareLinks.every(link => typeof link === 'string' && link.includes('#gift=') && link.length < 2500)) {
+              shareLinks = saved.shareLinks;
+            }
           }
         } catch (_) { /* Storage may be disabled: the app still works in memory. */ }
       }
 
       function save() {
-        try { localStorage.setItem(storageKey, JSON.stringify({participants, assignments})); }
+        try { localStorage.setItem(storageKey, JSON.stringify({participants, assignments, shareLinks})); }
         catch (_) { /* In private mode, use this tab only. */ }
       }
 
@@ -201,6 +248,7 @@
         participants.forEach((name, i) => elements.select.add(new Option(name, String(i))));
         conceal();
         hideOrganizer();
+        if (isDrawn) { void ensureLinks(); }
       }
 
       // Random derangement: no one gets themselves, everyone is assigned once.
@@ -230,6 +278,192 @@
         elements.select.value = '';
         elements.reveal.disabled = true;
       }
+
+      function toBase64url(bytes) {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      }
+
+      function fromBase64url(text) {
+        if (!/^[A-Za-z0-9_-]+$/.test(text)) throw new Error('Nieprawidłowy kod linku.');
+        const binary = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
+        return Uint8Array.from(binary, char => char.charCodeAt(0));
+      }
+
+      async function createPrivateLink(giver, recipient) {
+        const keyBytes = crypto.getRandomValues(new Uint8Array(32));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await crypto.subtle.importKey('raw', keyBytes, {name: 'AES-GCM'}, false, ['encrypt']);
+        const plain = new TextEncoder().encode(JSON.stringify({v: 1, giver, recipient}));
+        const cipher = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, plain));
+        const packet = new Uint8Array(iv.length + cipher.length);
+        packet.set(iv);
+        packet.set(cipher, iv.length);
+        // Fragment #gift= is not sent to the GitHub Pages server.
+        return location.origin + location.pathname + location.search + '#gift=' +
+          toBase64url(packet) + '.' + toBase64url(keyBytes);
+      }
+
+      async function readPrivateLink(hash) {
+        if (!crypto.subtle) throw new Error('Przeglądarka nie obsługuje bezpiecznego losowania.');
+        const tokens = hash.slice('#gift='.length).split('.');
+        if (tokens.length !== 2) throw new Error('Link do losowania jest nieprawidłowy.');
+        const packet = fromBase64url(tokens[0]);
+        const keyBytes = fromBase64url(tokens[1]);
+        if (packet.length < 29 || keyBytes.length !== 32) throw new Error('Link do losowania jest uszkodzony.');
+        const iv = packet.slice(0, 12);
+        const cipher = packet.slice(12);
+        const key = await crypto.subtle.importKey('raw', keyBytes, {name: 'AES-GCM'}, false, ['decrypt']);
+        const plain = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, key, cipher);
+        const result = JSON.parse(new TextDecoder().decode(plain));
+        if (result.v !== 1 || typeof result.giver !== 'string' || typeof result.recipient !== 'string' ||
+            !result.giver || !result.recipient || result.giver === result.recipient ||
+            result.giver.length > 40 || result.recipient.length > 40) throw new Error('Link ma nieprawidłowe dane.');
+        return result;
+      }
+
+      async function ensureLinks() {
+        if (!assignments) return;
+        if (shareLinks && shareLinks.length === participants.length) { renderShareLinks(); return; }
+        if (generatingLinks) return;
+        generatingLinks = true;
+        elements.shareList.textContent = 'Tworzę prywatne linki…';
+        const drawing = assignments;
+        const names = participants.slice();
+        try {
+          if (!crypto.subtle) throw new Error('Ta przeglądarka wymaga bezpiecznego połączenia HTTPS.');
+          const created = await Promise.all(names.map((name, index) => createPrivateLink(name, drawing[index])));
+          if (assignments !== drawing) return;
+          shareLinks = created;
+          save();
+          renderShareLinks();
+        } catch (error) {
+          elements.shareList.textContent = 'Nie mogę stworzyć linków. Otwórz stronę przez HTTPS i odśwież.';
+          message(error.message || 'Błąd tworzenia linków.');
+        } finally { generatingLinks = false; }
+      }
+
+      function renderShareLinks() {
+        elements.shareList.replaceChildren();
+        if (!shareLinks || !assignments) return;
+        participants.forEach((name, index) => {
+          const li = document.createElement('li');
+          const label = document.createElement('span');
+          label.className = 'share-name';
+          label.textContent = name;
+          const actions = document.createElement('div');
+          actions.className = 'share-actions';
+          const copy = document.createElement('button');
+          copy.type = 'button';
+          copy.className = 'share-copy';
+          copy.dataset.copy = String(index);
+          copy.textContent = '📋 Kopiuj link';
+          actions.append(copy);
+          if (navigator.share) {
+            const send = document.createElement('button');
+            send.type = 'button';
+            send.className = 'share-send';
+            send.dataset.send = String(index);
+            send.textContent = '📨 Wyślij';
+            actions.append(send);
+          }
+          li.append(label, actions);
+          elements.shareList.append(li);
+        });
+      }
+
+      async function copyLink(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          message('Link skopiowany. Wyślij go tylko właściwej osobie.');
+        } catch (_) {
+          window.prompt('Skopiuj prywatny link i wyślij go uczestnikowi:', text);
+          message('Skopiuj link z wyświetlonego okna.');
+        }
+      }
+
+      elements.shareList.addEventListener('click', async event => {
+        const copy = event.target.closest('button[data-copy]');
+        const send = event.target.closest('button[data-send]');
+        const button = copy || send;
+        if (!button || !shareLinks) return;
+        const index = Number(button.dataset.copy ?? button.dataset.send);
+        if (!Number.isInteger(index) || !shareLinks[index]) return;
+        const link = shareLinks[index];
+        if (send && navigator.share) {
+          try {
+            await navigator.share({title: 'Secret Santa 🎁', text: 'Otwórz swój tajny link do losowania Secret Santa:', url: link});
+          } catch (error) {
+            if (error.name !== 'AbortError') await copyLink(link);
+          }
+        } else { await copyLink(link); }
+      });
+
+      function csvCell(value) {
+        const str = String(value);
+        // Prevent spreadsheet formula injection in participant names.
+        const safe = /^[=+@\-\t\r]/.test(str) ? "'" + str : str;
+        return '"' + safe.replace(/"/g, '""') + '"';
+      }
+
+      elements.backup.addEventListener('click', () => {
+        if (!assignments || !shareLinks) { message('Linki nie są jeszcze gotowe.'); return; }
+        const lines = [['Uczestnik', 'Kupuje prezent dla', 'Prywatny link'].map(csvCell).join(';')];
+        participants.forEach((name, i) => lines.push([name, assignments[i], shareLinks[i]].map(csvCell).join(';')));
+        const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type: 'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'secret-santa-kopia-losowania.csv';
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        message('Pobrano kopię losowania. Przechowuj ją prywatnie, nie w publicznym repozytorium.');
+      });
+
+      async function showGuestLink() {
+        const hash = location.hash;
+        const guest = hash.startsWith('#gift=');
+        elements.guest.classList.toggle('hidden', !guest);
+        elements.setup.classList.toggle('hidden', guest || Boolean(assignments));
+        elements.draw.classList.toggle('hidden', guest || !assignments);
+        if (!guest) { guestAssignment = null; return; }
+        guestAssignment = null;
+        elements.guestName.textContent = '';
+        elements.guestRecipient.textContent = '';
+        elements.guestResult.classList.add('hidden');
+        elements.guestHide.classList.add('hidden');
+        elements.guestReveal.classList.remove('hidden');
+        elements.guestReveal.disabled = true;
+        elements.guestError.classList.add('hidden');
+        try {
+          const data = await readPrivateLink(hash);
+          if (location.hash !== hash) return;
+          guestAssignment = data;
+          elements.guestName.textContent = data.giver;
+          elements.guestReveal.disabled = false;
+        } catch (_) {
+          elements.guestError.textContent = 'Ten link jest nieprawidłowy lub uszkodzony. Poproś organizatora o ponowne wysłanie.';
+          elements.guestError.classList.remove('hidden');
+        }
+      }
+
+      elements.guestReveal.addEventListener('click', () => {
+        if (!guestAssignment) return;
+        elements.guestRecipient.textContent = guestAssignment.recipient;
+        elements.guestResult.classList.remove('hidden');
+        elements.guestReveal.classList.add('hidden');
+        elements.guestHide.classList.remove('hidden');
+      });
+      elements.guestHide.addEventListener('click', () => {
+        elements.guestRecipient.textContent = '';
+        elements.guestResult.classList.add('hidden');
+        elements.guestHide.classList.add('hidden');
+        elements.guestReveal.classList.remove('hidden');
+      });
+      window.addEventListener('hashchange', () => { void showGuestLink(); });
 
       function hideOrganizer() {
         elements.organizerResults.classList.add('hidden');
@@ -291,13 +525,15 @@
         if (!button) return;
         participants.splice(Number(button.dataset.index), 1);
         assignments = null;
+        shareLinks = null;
         save(); render(); message('');
       });
 
       elements.drawButton.addEventListener('click', () => {
         try {
           assignments = drawAssignments(participants);
-          save(); render(); message('Losowanie zakończone. Nie pokazuj innym swojego wyniku!');
+          shareLinks = null;
+          save(); render(); message('Gotowe! Wyślij każdemu uczestnikowi jego prywatny link.');
         } catch (_) { message('Nie udało się przeprowadzić losowania. Spróbuj ponownie.'); }
       });
 
@@ -322,10 +558,11 @@
       elements.restart.addEventListener('click', () => {
         if (!window.confirm('Usunąć wyniki losowania? Uczestnicy pozostaną na liście.')) return;
         assignments = null;
+        shareLinks = null;
         save(); render(); message('Możesz zmienić listę lub wykonać nowe losowanie.');
       });
 
-      load(); render();
+      load(); render(); void showGuestLink();
     })();
   </script>
 </body>
