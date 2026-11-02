@@ -23,10 +23,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Test Secret Santa security and draw
+        run: node test.mjs
       - name: Prepare website
         run: |
           mkdir -p _site
-          cp index.html _site/index.html
+          cp index.html santa-core.mjs _site/
           touch _site/.nojekyll
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
