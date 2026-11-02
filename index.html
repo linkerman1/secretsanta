@@ -3,567 +3,404 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101629">
-  <meta name="description" content="Secret Santa — świąteczne losowanie prezentów bez powtórek i bez losowania samego siebie.">
-  <title>Secret Santa 🎁 — Losowanie prezentów</title>
+  <meta name="theme-color" content="#11192b">
+  <meta name="description" content="Secret Santa: jedno wspólne zaproszenie, prywatny PIN i świąteczne losowanie.">
+  <title>Secret Santa 🎁 | Tajemniczy Mikołaj</title>
   <style>
-    :root { color-scheme: dark; --bg: #101629; --card: #1d293e; --panel: #111c30; --border: #39475c; --text: #f5f8ff; --muted: #b7c4d6; --red: #ee4852; --red-dark: #ce3541; --gold: #ffc15b; --blue: #578fff; }
+    :root { color-scheme: dark; --bg: #11192b; --card: #202d40; --panel: #142136; --outline: #41536c; --text: #f7f9fe; --muted: #bac9da; --red: #ec4856; --blue: #417df1; --gold: #ffd179; --green: #a1e0b8; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 14px; background: radial-gradient(ellipse at 50% 0, #263052 0, var(--bg) 70%); font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); }
-    .card { width: min(100%, 490px); padding: 30px clamp(18px, 5vw, 34px); background: var(--card); border: 1px solid #ffffff18; border-radius: 24px; box-shadow: 0 22px 60px #0007; }
-    .top { text-align: center; }
-    .eyebrow { display: inline-block; padding: 5px 13px; border-radius: 999px; background: #ee485226; color: #ffc0c3; font-size: .77rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    h1 { margin: 12px 0 4px; font-size: clamp(1.75rem, 5vw, 2.3rem); line-height: 1.2; }
-    .lead { margin: 0 0 26px; color: var(--muted); font-size: .96rem; }
-    h2 { margin: 0 0 11px; font-size: 1.08rem; }
-    p { margin: 8px 0 15px; }
-    label { display: block; margin-bottom: 8px; font-weight: 650; }
-    .input-row { display: flex; gap: 9px; }
-    input, select { min-width: 0; width: 100%; padding: 13px 14px; border-radius: 11px; border: 1px solid var(--border); background: var(--panel); color: var(--text); font: inherit; }
-    input { flex: 1; }
-    input::placeholder { color: #97a8bd; }
-    input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-    button { min-height: 44px; border: 0; border-radius: 11px; padding: 11px 16px; font: inherit; font-weight: 740; color: white; cursor: pointer; transition: filter .14s, transform .14s; }
-    button:hover:not(:disabled) { filter: brightness(1.1); }
-    button:active:not(:disabled) { transform: scale(.985); }
-    button:disabled { cursor: not-allowed; opacity: .55; }
-    .add { background: var(--blue); flex: 0 0 auto; }
-    .primary { width: 100%; background: var(--red); padding: 15px; margin-top: 17px; font-size: 1.08rem; }
-    .secondary { background: #34445e; }
-    .outline { background: transparent; border: 1px solid var(--border); }
-    .space-between { display: flex; align-items: baseline; justify-content: space-between; margin-top: 22px; gap: 10px; }
-    .count { font-size: .85rem; color: var(--muted); }
-    .participants { display: flex; flex-wrap: wrap; gap: 8px; padding: 13px; min-height: 63px; max-height: 172px; overflow: auto; margin: 0; list-style: none; background: var(--panel); border: 1px solid var(--border); border-radius: 13px; }
-    .participants li { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 6px 8px 6px 12px; background: #33425a; border-radius: 999px; font-size: .91rem; overflow-wrap: anywhere; }
-    .participants .empty { display: block; padding: 6px 3px; background: none; color: var(--muted); }
-    .remove { min-height: 26px; padding: 0 6px; border-radius: 7px; background: transparent; font-size: 1.15rem; line-height: 1; }
-    .info { margin: 12px 0 0; font-size: .86rem; color: var(--muted); }
-    .notice { min-height: 25px; margin: 10px 0 0; color: #ffcd83; font-size: .9rem; }
-    .notice:empty { display: none; }
-    .draw-panel { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--panel); text-align: center; }
-    .draw-panel .gift { font-size: 2.7rem; line-height: 1.2; }
-    .draw-panel h2 { margin: 8px 0; font-size: 1.3rem; }
-    .draw-panel p { color: var(--muted); }
-    .draw-panel label { text-align: left; margin-top: 20px; }
-    .result { margin: 15px 0; padding: 22px 12px; border: 2px solid #dca64a; border-radius: 14px; background: #302a24; }
-    .result small { display: block; color: #f3dbb3; font-size: .9rem; }
-    .result strong { display: block; margin-top: 5px; font-size: clamp(1.4rem, 5vw, 2rem); color: var(--gold); overflow-wrap: anywhere; }
-    .row-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
-    .row-actions button { flex: 1; }
-    .organizer-panel { margin-top: 22px; }
-    .organizer-toggle { width: 100%; }
-    .organizer-results { margin-top: 12px; padding: 18px; border: 1px solid #d39a4980; border-radius: 14px; background: #292535; }
-    .organizer-results h2 { margin: 0 0 6px; }
-    .organizer-warning { font-size: .85rem; color: #ffdfad; }
-    .pairs { margin: 15px 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-    .pairs li { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-radius: 10px; background: #151e32; overflow-wrap: anywhere; }
-    .pairs .giver { font-weight: 700; }
-    .pairs .recipient { color: var(--gold); font-weight: 700; }
-    .organizer-hide { width: 100%; }
-    .share-panel { background: #101c30; border: 1px solid #576681; border-radius: 17px; padding: 19px; margin-bottom: 20px; }
-    .share-panel h2 { font-size: 1.28rem; }
-    .share-panel p { color: var(--muted); font-size: .92rem; }
-    .share-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 9px; }
-    .share-list li { background: #26364e; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 9px; justify-content: space-between; flex-wrap: wrap; }
-    .share-name { font-weight: 700; overflow-wrap: anywhere; flex: 1; min-width: 95px; }
-    .share-actions { display: flex; gap: 7px; }
-    .share-copy { background: #477bea; font-size: .86rem; padding: 8px 11px; }
-    .share-send { background: #3a566c; font-size: .86rem; padding: 8px 11px; }
-    .share-note { font-size: .81rem !important; }
-    .guest-content { text-align: center; }
-    .guest-person { font-size: 1.45rem; font-weight: 800; color: var(--gold); margin: 10px 0; overflow-wrap: anywhere; }
-    .guest-error { color: #ffce91; }
-    .backup-button { width: 100%; margin-top: 12px; }
-    .foot { text-align: center; margin: 23px 0 0; color: var(--muted); font-size: .8rem; }
+    body { font: 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; color: var(--text); background: radial-gradient(ellipse at top,#283656 0%,var(--bg) 76%); margin: 0; min-height: 100vh; padding: 24px 12px; display: grid; place-items: center; }
+    .card { background: var(--card); box-shadow: 0 20px 52px #0006; border: 1px solid #ffffff16; border-radius: 23px; width: min(100%, 550px); padding: clamp(20px,5vw,34px); }
+    header { text-align: center; margin-bottom: 25px; }
+    .badge { display: inline-block; border-radius: 30px; background: #ef48542c; padding: 5px 13px; color: #ffbfc5; font-weight: 800; font-size: .73rem; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { font-size: clamp(1.9rem,6vw,2.4rem); margin: 13px 0 4px; line-height: 1.2; }
+    h2 { font-size: 1.18rem; margin: 0 0 10px; }
+    h3 { font-size: 1rem; margin: 0 0 10px; }
+    p { margin: 7px 0 16px; }
+    .sub { font-size: .95rem; color: var(--muted); }
+    .panel { padding: 18px; margin: 15px 0; border: 1px solid var(--outline); border-radius: 14px; background: var(--panel); }
+    label { display: block; margin: 13px 0 8px; font-weight: 690; }
+    input,select { border: 1px solid var(--outline); border-radius: 11px; background: #0e1b2c; color: var(--text); min-width: 0; width: 100%; padding: 13px; font: inherit; }
+    input::placeholder { color: #99aac1; }
+    input:focus-visible,select:focus-visible,button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    button { border: 0; cursor: pointer; color: white; border-radius: 11px; padding: 11px 14px; font: inherit; font-weight: 750; min-height: 44px; }
+    button:hover:not(:disabled) { filter: brightness(1.12); }
+    button:disabled { opacity: .52; cursor: not-allowed; }
+    .red { background: var(--red); } .blue { background: var(--blue); } .neutral { background: #374c68; } .outline { background: none; border: 1px solid #71829a; }
+    .wide { width: 100%; } .big { padding: 15px; font-size: 1.05rem; }
+    .line { display: flex; align-items: stretch; gap: 8px; }
+    .line > input { flex: 1; }
+    .line > button { flex: 0 0 auto; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 0; min-height: 33px; padding: 0; list-style: none; }
+    .chips li { display: flex; gap: 7px; align-items: center; background: #344761; border-radius: 24px; padding: 5px 8px 5px 12px; font-size: .9rem; overflow-wrap: anywhere; }
+    .chips button { font-size: 1.12rem; background: transparent; padding: 0 5px; min-height: 25px; }
+    .muted { color: var(--muted); font-size: .87rem; }
+    .status { color: #ffe0a0; margin: 15px 0 0; min-height: 20px; font-size: .92rem; overflow-wrap: anywhere; }
+    .status:empty { display: none; }
     .hidden { display: none !important; }
-    @media (max-width: 360px) { .card { padding: 23px 16px; } .input-row { flex-wrap: wrap; } .add { width: 100%; } }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+    .share-url { font-size: .83rem; word-break: break-all; max-height: 95px; resize: vertical; }
+    textarea { background: #0e1b2c; border: 1px solid var(--outline); color: var(--text); border-radius: 10px; padding: 12px; width: 100%; min-height: 80px; font: inherit; }
+    .pin-list { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 9px; }
+    .pin-list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 9px; background: #263a54; padding: 12px; border-radius: 11px; }
+    .pin-list .name { font-weight: 750; overflow-wrap: anywhere; min-width: 75px; flex: 1; }
+    .pin-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .code { color: var(--gold); font: 700 .92rem ui-monospace,monospace; letter-spacing: .02em; user-select: all; }
+    .pin-copy { background: var(--blue); font-size: .82rem; padding: 8px 10px; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .actions button { flex: 1; }
+    .notice { border-left: 3px solid var(--gold); padding: 10px 12px; background: #8f68351c; font-size: .85rem; color: #ffe4b0; border-radius: 7px; margin: 10px 0; }
+    .success { color: var(--green); font-weight: 750; }
+    .reveal { text-align: center; padding: 19px 12px; background: #32291f; border: 2px solid #b98b49; border-radius: 13px; margin-top: 15px; }
+    .reveal strong { display: block; color: var(--gold); font-size: clamp(1.4rem, 5vw, 2rem); overflow-wrap: anywhere; }
+    .pairs { padding: 0; list-style: none; display: grid; gap: 8px; }
+    .pairs li { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; background: #293b51; padding: 10px 12px; border-radius: 8px; }
+    .pairs strong { color: var(--gold); }
+    footer { font-size: .8rem; color: var(--muted); text-align: center; margin-top: 23px; }
+    .big-icon { font-size: 2.5rem; text-align: center; margin-bottom: 6px; }
+    @media(max-width:390px) { .line { flex-wrap: wrap; } .line > button { width: 100%; } .pin-list li { align-items: flex-start; } }
+    @media(prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
   </style>
 </head>
 <body>
-  <main class="card">
-    <header class="top">
-      <span class="eyebrow">🎄 Świąteczne losowanie</span>
-      <h1>Secret Santa 🎁</h1>
-      <p class="lead">Każdy przygotowuje jeden prezent, każdy jeden otrzymuje!</p>
-    </header>
+<main class="card">
+  <header>
+    <span class="badge">🎄 Tajemniczy Mikołaj</span>
+    <h1>Secret Santa 🎁</h1>
+    <p class="sub">Jeden wspólny link, osobne PIN-y i sekretne prezenty!</p>
+  </header>
 
-    <section id="setup-view" aria-label="Przygotowanie losowania">
-      <form id="add-form" novalidate>
-        <label for="name-input">Dodaj uczestników</label>
-        <div class="input-row">
-          <input id="name-input" type="text" maxlength="40" placeholder="Imię uczestnika" autocomplete="off" required>
-          <button class="add" type="submit">+ Dodaj</button>
-        </div>
-      </form>
-      <div class="space-between">
-        <h2>Lista osób</h2>
-        <span class="count" id="count">0 osób</span>
+  <section id="setup" aria-label="Organizowanie losowania">
+    <h2>🎅 Przygotuj losowanie</h2>
+    <p class="sub">Dodaj wszystkich uczestników, a następnie rozlosuj przydziały. Każdy dostanie indywidualny PIN do jednego wspólnego linku.</p>
+    <form id="add-form">
+      <label for="add-name">Imię uczestnika</label>
+      <div class="line">
+        <input id="add-name" type="text" maxlength="40" placeholder="Np. Kasia" required autocomplete="off">
+        <button class="blue" type="submit">+ Dodaj</button>
       </div>
-      <ul id="participants" class="participants" aria-label="Uczestnicy">
-        <li class="empty">Dodaj co najmniej 2 osoby, by rozpocząć.</li>
-      </ul>
-      <p class="info">Przydziel osoby raz, a potem wyślij każdemu jego indywidualny link. Każdy odkryje wynik na własnym telefonie.</p>
-      <button id="draw-button" type="button" class="primary" disabled>🎲 Losuj i przygotuj linki</button>
-    </section>
+    </form>
+    <ul id="name-list" class="chips" aria-label="Uczestnicy"></ul>
+    <p id="names-count" class="muted">Dodaj co najmniej 2 osoby.</p>
+    <button id="draw" class="red wide big" disabled type="button">🎲 Rozlosuj prezenty</button>
+    <div class="panel">
+      <h3>Masz kopię wcześniejszego losowania?</h3>
+      <label for="restore-file" class="muted">Przywróć prywatny plik .json</label>
+      <input type="file" id="restore-file" accept=".json,application/json">
+    </div>
+  </section>
 
-    <section id="draw-view" class="hidden" aria-label="Wyniki losowania">
-      <section class="share-panel" aria-label="Linki do wysłania">
-        <h2>📨 Wyślij każdemu prywatny link</h2>
-        <p>Każdy dostaje inny link i klika „Odkryj prezent” na swoim telefonie. Pary są już rozlosowane, więc nikt nie trafi na siebie.</p>
-        <ul class="share-list" id="share-list" aria-label="Indywidualne linki dla uczestników"><li>Tworzę linki…</li></ul>
-        <p class="share-note">Nie wysyłaj wszystkim tego samego linku. Zachowaj tę stronę na swoim urządzeniu — wyniki są zapisane tylko tutaj.</p>
-      </section>
-      <div class="draw-panel">
-        <div class="gift" aria-hidden="true">🎁</div>
-        <h2>Lub sprawdź wynik tutaj</h2>
-        <p>Opcja dodatkowa, gdy ktoś nie może otworzyć swojego linku. Pamiętaj, aby ukryć wynik przed kolejną osobą.</p>
-        <label for="person-select">Kim jesteś?</label>
-        <select id="person-select"><option value="">— Wybierz swoje imię —</option></select>
-        <button id="reveal-button" type="button" class="primary" disabled>🔐 Pokaż mój wynik</button>
-        <div id="result" class="result hidden" aria-live="polite">
-          <small>Przygotowujesz prezent dla:</small>
-          <strong id="recipient-name"></strong>
-        </div>
-        <button id="hide-button" type="button" class="secondary hidden">🙈 Ukryj wynik i przekaż telefon</button>
+  <section id="admin" class="hidden" aria-label="Panel organizatora">
+    <p class="success">✓ Losowanie gotowe — każdy kupuje prezent jednej osobie.</p>
+    <div class="panel">
+      <h2>🔗 Jeden link dla wszystkich</h2>
+      <p class="sub">Skopiuj i wyślij go na grupę. To dokładnie ten sam adres dla każdego uczestnika.</p>
+      <label for="room-url">Wspólny link</label>
+      <textarea id="room-url" class="share-url" readonly rows="3" aria-label="Wspólny link do losowania"></textarea>
+      <div class="actions">
+        <button class="blue" id="copy-room" type="button">📋 Kopiuj wspólny link</button>
+        <button class="neutral" id="send-room" type="button">📨 Udostępnij</button>
       </div>
-      <section class="organizer-panel" aria-label="Panel organizatora">
-        <button id="organizer-toggle" type="button" class="outline organizer-toggle" aria-controls="organizer-results" aria-expanded="false">🎅 Pokaż wszystkie pary (organizator)</button>
-        <div id="organizer-results" class="organizer-results hidden">
-          <h2>🎅 Panel organizatora</h2>
-          <p class="organizer-warning">Uwaga! Poniżej widać całe losowanie. Ukryj tę listę przed przekazaniem telefonu.</p>
-          <ol id="all-pairs" class="pairs" aria-label="Wszystkie pary w losowaniu"></ol>
-          <button id="organizer-hide" type="button" class="secondary organizer-hide">🙈 Ukryj wszystkie pary</button>
-          <button id="backup-button" type="button" class="outline backup-button">⬇ Pobierz prywatną kopię losowania (.csv)</button>
-        </div>
-      </section>
-      <div class="row-actions">
-        <button id="restart-button" class="outline" type="button">↻ Losuj ponownie / zmień listę</button>
+    </div>
+    <div class="panel">
+      <h2>🔐 Prywatne PIN-y uczestników</h2>
+      <p class="sub">Każdemu wyślij <strong>tylko jego</strong> PIN prywatną wiadomością. Bez tego kodu nie odszyfruje swojego wyniku.</p>
+      <ul id="pin-list" class="pin-list" aria-label="PIN-y uczestników"></ul>
+      <div class="notice">Nie wysyłaj całej listy PIN-ów na grupę. PIN-y są 16-cyfrowe, aby zapewnić ochronę bez centralnej bazy danych.</div>
+    </div>
+    <div class="panel">
+      <h2>📦 Kopia zapasowa i podgląd</h2>
+      <button id="backup-json" class="neutral wide" type="button">⬇ Pobierz kopię do przywrócenia (.json)</button>
+      <button id="backup-csv" class="outline wide" style="margin-top:9px" type="button">⬇ Pobierz listę par i PIN-ów (.csv)</button>
+      <button id="show-pairs" class="outline wide" style="margin-top:9px" type="button" aria-expanded="false" aria-controls="pairs-panel">👁 Pokaż wszystkie pary</button>
+      <div id="pairs-panel" class="hidden">
+        <p class="notice">Tylko organizator powinien zobaczyć tę listę.</p>
+        <ul id="pairs-list" class="pairs" aria-label="Wylosowane pary"></ul>
+        <button id="hide-pairs" class="neutral wide" type="button">🙈 Ukryj pary</button>
       </div>
-    </section>
-    <section id="guest-view" class="hidden guest-content" aria-label="Indywidualne losowanie">
-      <div class="draw-panel">
-        <div class="gift" aria-hidden="true">🎄</div>
-        <h2>Twój tajemniczy Mikołaj 🎁</h2>
-        <p>Ten link został przygotowany specjalnie dla Ciebie.</p>
-        <p class="guest-person" id="guest-name"></p>
-        <button id="guest-reveal" class="primary" type="button" disabled>🎁 Odkryj, komu kupujesz prezent</button>
-        <div id="guest-result" class="result hidden" aria-live="polite">
-          <small>Przygotowujesz prezent dla:</small>
-          <strong id="guest-recipient"></strong>
-        </div>
-        <button id="guest-hide" class="secondary hidden" type="button">🙈 Ukryj wynik</button>
-        <p id="guest-error" class="guest-error hidden" role="alert"></p>
-        <p class="info">Możesz wrócić do tego samego linku, jeśli zapomnisz wyniku. Zachowaj go dla siebie.</p>
-      </div>
-    </section>
-    <p id="message" class="notice" role="status" aria-live="polite"></p>
-    <p class="foot">Bez konta, bez serwera. Wyniki są zapisane tylko w tej przeglądarce.</p>
-  </main>
+    </div>
+    <button id="reset" class="outline wide" type="button">↻ Rozpocznij nowe losowanie</button>
+    <p class="muted">Dane organizatora są tylko na tym urządzeniu. Zachowaj prywatną kopię .json, aby móc wrócić do listy po utracie danych przeglądarki.</p>
+  </section>
 
-  <script>
-    (() => {
-      'use strict';
-      const storageKey = 'secret-santa-v1';
-      const $ = (id) => document.getElementById(id);
-      const elements = {
-        setup: $('setup-view'), draw: $('draw-view'), form: $('add-form'), input: $('name-input'),
-        people: $('participants'), count: $('count'), drawButton: $('draw-button'),
-        select: $('person-select'), reveal: $('reveal-button'), result: $('result'),
-        recipient: $('recipient-name'), hide: $('hide-button'), restart: $('restart-button'), message: $('message'),
-        organizerToggle: $('organizer-toggle'), organizerResults: $('organizer-results'),
-        organizerHide: $('organizer-hide'), allPairs: $('all-pairs'),
-        shareList: $('share-list'), backup: $('backup-button'), guest: $('guest-view'),
-        guestName: $('guest-name'), guestReveal: $('guest-reveal'), guestResult: $('guest-result'),
-        guestRecipient: $('guest-recipient'), guestHide: $('guest-hide'), guestError: $('guest-error')
-      };
-      let participants = [];
-      let assignments = null;
-      let shareLinks = null;
-      let generatingLinks = false;
-      let guestAssignment = null;
+  <section id="guest" class="hidden" aria-label="Sprawdź swój wynik">
+    <div class="big-icon" aria-hidden="true">🎁</div>
+    <h2 style="text-align:center">Twój tajny przydział</h2>
+    <p class="sub" style="text-align:center">Wybierz swoje imię i wpisz PIN przekazany Ci przez organizatora.</p>
+    <form id="unlock-form">
+      <label for="guest-name">Twoje imię</label>
+      <select id="guest-name" required>
+        <option value="">— Wybierz imię —</option>
+      </select>
+      <label for="guest-pin">Twój 16-cyfrowy PIN</label>
+      <input id="guest-pin" type="password" inputmode="numeric" pattern="[0-9]{16}" maxlength="16" minlength="16" autocomplete="off" placeholder="••••••••••••••••" required>
+      <button id="unlock" class="red wide big" style="margin-top:17px" type="submit">🎁 Odkryj mój wynik</button>
+    </form>
+    <div id="guest-result" class="reveal hidden" aria-live="polite">
+      <span>Przygotowujesz prezent dla:</span>
+      <strong id="guest-recipient"></strong>
+    </div>
+    <button id="guest-hide" class="neutral wide hidden" type="button" style="margin-top:12px">🙈 Ukryj wynik</button>
+    <p class="notice">Nie udostępniaj nikomu swojego PIN-u. PIN drugiej osoby nie daje dostępu do Twojego wyniku.</p>
+  </section>
 
-      function load() {
-        try {
-          const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-          if (!saved || !Array.isArray(saved.participants)) return;
-          const names = saved.participants;
-          if (names.length > 100 || names.some(n => typeof n !== 'string' || !n.trim() || n.length > 40)) return;
-          if (new Set(names.map(n => n.toLocaleLowerCase('pl'))).size !== names.length) return;
-          participants = names;
-          const a = saved.assignments;
-          if (Array.isArray(a) && a.length === names.length && names.length >= 2 &&
-              new Set(a).size === a.length && a.every((n, i) => names.includes(n) && n !== names[i])) {
-            assignments = a;
-            if (Array.isArray(saved.shareLinks) && saved.shareLinks.length === names.length &&
-                saved.shareLinks.every(link => typeof link === 'string' && link.includes('#gift=') && link.length < 2500)) {
-              shareLinks = saved.shareLinks;
-            }
-          }
-        } catch (_) { /* Storage may be disabled: the app still works in memory. */ }
+  <section id="invalid" class="hidden" aria-label="Nieprawidłowy link">
+    <h2>⚠️ Link nie działa</h2>
+    <p id="invalid-message" class="sub"></p>
+    <p class="sub">Poproś organizatora o ponowne przesłanie wspólnego linku.</p>
+  </section>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+  <footer>Bez konta i serwera. Wyniki szyfrowane AES-GCM. Pamiętaj, że posiadacz Twojego PIN-u może odczytać Twój wynik.</footer>
+</main>
+<script type="module">
+  import {MAX_PARTICIPANTS, PIN_LENGTH, normalizeNames, createRoom, encodeRoom, decodeRoom, unlock, backupIsValid} from './santa-core.mjs';
+
+  const storageKey = 'secret-santa-group-v1';
+  const $ = id => document.getElementById(id);
+  const ids = ['setup','admin','guest','invalid','add-form','add-name','name-list','names-count','draw','restore-file',
+    'room-url','copy-room','send-room','pin-list','backup-json','backup-csv','show-pairs','hide-pairs','pairs-panel',
+    'pairs-list','reset','unlock-form','guest-name','guest-pin','unlock','guest-result','guest-recipient','guest-hide',
+    'status','invalid-message'];
+  const el = Object.fromEntries(ids.map(id => [id.replace(/-([a-z])/g,(_,c)=>c.toUpperCase()), $(id)]));
+  let names = [];
+  let adminData = null;
+  let room = null;
+  let loading = false;
+
+  const status = text => {el.status.textContent = text || '';};
+  function showOnly(id) {
+    ['setup','admin','guest','invalid'].forEach(key => el[key].classList.toggle('hidden', key !== id));
+    status('');
+  }
+  function rootAddress() {
+    return location.origin + location.pathname + location.search;
+  }
+  function groupLink(data) {
+    return rootAddress() + '#room=' + encodeRoom(data.room);
+  }
+  function saveAdmin() {
+    try {localStorage.setItem(storageKey, JSON.stringify(adminData));}
+    catch (_) {status('Nie można zapisać danych na tym urządzeniu. Pobierz kopię .json.');}
+  }
+  function loadAdmin() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (backupIsValid(stored)) adminData = stored;
+    } catch (_) {}
+  }
+
+  function renderNames() {
+    el.nameList.replaceChildren();
+    names.forEach((name,index) => {
+      const li = document.createElement('li');
+      const text = document.createElement('span');
+      text.textContent = name;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.dataset.index = String(index);
+      remove.setAttribute('aria-label', 'Usuń ' + name);
+      remove.textContent = '×';
+      li.append(text,remove); el.nameList.append(li);
+    });
+    el.draw.disabled = names.length < 2 || loading;
+    el.namesCount.textContent = names.length + '/' + MAX_PARTICIPANTS + ' uczestników';
+  }
+
+  function renderAdmin() {
+    if (!adminData) return;
+    showOnly('admin');
+    el.roomUrl.value = groupLink(adminData);
+    el.pinList.replaceChildren();
+    adminData.names.forEach((name,index) => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.className = 'name'; span.textContent = name;
+      const div = document.createElement('div');
+      div.className = 'pin-group';
+      const code = document.createElement('code');
+      code.className = 'code'; code.textContent = adminData.pins[index];
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'pin-copy';
+      button.dataset.index = String(index); button.textContent = '📋 Kopiuj PIN';
+      div.append(code,button); li.append(span,div); el.pinList.append(li);
+    });
+    hidePairs();
+  }
+  function hidePairs() {
+    el.pairsPanel.classList.add('hidden');
+    el.pairsList.replaceChildren();
+    el.showPairs.setAttribute('aria-expanded','false');
+    el.showPairs.textContent = '👁 Pokaż wszystkie pary';
+  }
+  function renderGuest(data) {
+    room = data;
+    showOnly('guest');
+    el.guestName.replaceChildren();
+    el.guestName.add(new Option('— Wybierz imię —',''));
+    room.entries.forEach(item => el.guestName.add(new Option(item.name,item.name)));
+    el.guestPin.value = '';
+    hideGuestResult();
+  }
+  function hideGuestResult() {
+    el.guestResult.classList.add('hidden');
+    el.guestHide.classList.add('hidden');
+    el.guestRecipient.textContent = '';
+    el.guestPin.value = '';
+  }
+  function route() {
+    const hash = location.hash;
+    if (hash.startsWith('#room=')) {
+      try {renderGuest(decodeRoom(hash.slice(6)));}
+      catch (error) {
+        room = null; showOnly('invalid');
+        el.invalidMessage.textContent = error.message || 'Nieprawidłowe zaproszenie.';
       }
+      return;
+    }
+    room = null;
+    if (hash) {
+      showOnly('invalid');
+      el.invalidMessage.textContent = 'To zaproszenie nie zostało rozpoznane.';
+      return;
+    }
+    if (adminData) renderAdmin();
+    else {showOnly('setup');renderNames();}
+  }
 
-      function save() {
-        try { localStorage.setItem(storageKey, JSON.stringify({participants, assignments, shareLinks})); }
-        catch (_) { /* In private mode, use this tab only. */ }
-      }
+  async function copyText(text) {
+    try {await navigator.clipboard.writeText(text); status('Skopiowano do schowka.');}
+    catch (_) {window.prompt('Skopiuj tekst:',text);}
+  }
+  el.addForm.addEventListener('submit',event => {
+    event.preventDefault();
+    const name = el.addName.value.trim().replace(/\s+/g,' ');
+    if (!name || name.length > 40) {status('Wpisz imię (1–40 znaków).');return;}
+    if (names.length >= MAX_PARTICIPANTS) {status('Limit to ' + MAX_PARTICIPANTS + ' osoby.');return;}
+    if (names.some(n => n.toLocaleLowerCase('pl') === name.toLocaleLowerCase('pl'))) {
+      status('Ta osoba jest już na liście.'); return;
+    }
+    names.push(name);el.addName.value = ''; renderNames();status('');el.addName.focus();
+  });
+  el.nameList.addEventListener('click',event => {
+    const button = event.target.closest('button[data-index]');
+    if (!button) return;
+    names.splice(Number(button.dataset.index),1);
+    renderNames();status('');
+  });
 
-      function message(text = '') { elements.message.textContent = text; }
-
-      function countLabel(n) {
-        if (n === 1) return '1 osoba';
-        const end = n % 10;
-        return ((end >= 2 && end <= 4) && (n % 100 < 12 || n % 100 > 14)) ? `${n} osoby` : `${n} osób`;
-      }
-
-      function render() {
-        const isDrawn = Boolean(assignments);
-        elements.setup.classList.toggle('hidden', isDrawn);
-        elements.draw.classList.toggle('hidden', !isDrawn);
-        elements.count.textContent = countLabel(participants.length);
-        elements.drawButton.disabled = participants.length < 2;
-        elements.people.replaceChildren();
-        if (!participants.length) {
-          const li = document.createElement('li');
-          li.className = 'empty';
-          li.textContent = 'Dodaj co najmniej 2 osoby, by rozpocząć.';
-          elements.people.append(li);
-        }
-        participants.forEach((name, index) => {
-          const li = document.createElement('li');
-          const label = document.createElement('span');
-          label.textContent = name;
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'remove';
-          button.textContent = '×';
-          button.setAttribute('aria-label', `Usuń ${name}`);
-          button.dataset.index = index;
-          li.append(label, button);
-          elements.people.append(li);
-        });
-        elements.select.replaceChildren();
-        const prompt = new Option('— Wybierz swoje imię —', '');
-        elements.select.add(prompt);
-        participants.forEach((name, i) => elements.select.add(new Option(name, String(i))));
-        conceal();
-        hideOrganizer();
-        if (isDrawn) { void ensureLinks(); }
-      }
-
-      // Random derangement: no one gets themselves, everyone is assigned once.
-      function drawAssignments(names) {
-        const n = names.length;
-        if (n < 2) throw new Error('Dodaj co najmniej dwie osoby.');
-        const indices = Array.from({length: n}, (_, i) => i);
-        let valid = false;
-        while (!valid) {
-          for (let i = n - 1; i > 0; i--) {
-            const random = new Uint32Array(1);
-            crypto.getRandomValues(random);
-            const j = random[0] % (i + 1);
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-          }
-          valid = indices.every((value, i) => value !== i);
-        }
-        return indices.map(i => names[i]);
-      }
-
-      function conceal() {
-        elements.result.classList.add('hidden');
-        elements.hide.classList.add('hidden');
-        elements.recipient.textContent = '';
-        elements.reveal.classList.remove('hidden');
-        elements.select.disabled = false;
-        elements.select.value = '';
-        elements.reveal.disabled = true;
-      }
-
-      function toBase64url(bytes) {
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-      }
-
-      function fromBase64url(text) {
-        if (!/^[A-Za-z0-9_-]+$/.test(text)) throw new Error('Nieprawidłowy kod linku.');
-        const binary = atob(text.replace(/-/g, '+').replace(/_/g, '/'));
-        return Uint8Array.from(binary, char => char.charCodeAt(0));
-      }
-
-      async function createPrivateLink(giver, recipient) {
-        const keyBytes = crypto.getRandomValues(new Uint8Array(32));
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const key = await crypto.subtle.importKey('raw', keyBytes, {name: 'AES-GCM'}, false, ['encrypt']);
-        const plain = new TextEncoder().encode(JSON.stringify({v: 1, giver, recipient}));
-        const cipher = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, plain));
-        const packet = new Uint8Array(iv.length + cipher.length);
-        packet.set(iv);
-        packet.set(cipher, iv.length);
-        // Fragment #gift= is not sent to the GitHub Pages server.
-        return location.origin + location.pathname + location.search + '#gift=' +
-          toBase64url(packet) + '.' + toBase64url(keyBytes);
-      }
-
-      async function readPrivateLink(hash) {
-        if (!crypto.subtle) throw new Error('Przeglądarka nie obsługuje bezpiecznego losowania.');
-        const tokens = hash.slice('#gift='.length).split('.');
-        if (tokens.length !== 2) throw new Error('Link do losowania jest nieprawidłowy.');
-        const packet = fromBase64url(tokens[0]);
-        const keyBytes = fromBase64url(tokens[1]);
-        if (packet.length < 29 || keyBytes.length !== 32) throw new Error('Link do losowania jest uszkodzony.');
-        const iv = packet.slice(0, 12);
-        const cipher = packet.slice(12);
-        const key = await crypto.subtle.importKey('raw', keyBytes, {name: 'AES-GCM'}, false, ['decrypt']);
-        const plain = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, key, cipher);
-        const result = JSON.parse(new TextDecoder().decode(plain));
-        if (result.v !== 1 || typeof result.giver !== 'string' || typeof result.recipient !== 'string' ||
-            !result.giver || !result.recipient || result.giver === result.recipient ||
-            result.giver.length > 40 || result.recipient.length > 40) throw new Error('Link ma nieprawidłowe dane.');
-        return result;
-      }
-
-      async function ensureLinks() {
-        if (!assignments) return;
-        if (shareLinks && shareLinks.length === participants.length) { renderShareLinks(); return; }
-        if (generatingLinks) return;
-        generatingLinks = true;
-        elements.shareList.textContent = 'Tworzę prywatne linki…';
-        const drawing = assignments;
-        const names = participants.slice();
-        try {
-          if (!crypto.subtle) throw new Error('Ta przeglądarka wymaga bezpiecznego połączenia HTTPS.');
-          const created = await Promise.all(names.map((name, index) => createPrivateLink(name, drawing[index])));
-          if (assignments !== drawing) return;
-          shareLinks = created;
-          save();
-          renderShareLinks();
-        } catch (error) {
-          elements.shareList.textContent = 'Nie mogę stworzyć linków. Otwórz stronę przez HTTPS i odśwież.';
-          message(error.message || 'Błąd tworzenia linków.');
-        } finally { generatingLinks = false; }
-      }
-
-      function renderShareLinks() {
-        elements.shareList.replaceChildren();
-        if (!shareLinks || !assignments) return;
-        participants.forEach((name, index) => {
-          const li = document.createElement('li');
-          const label = document.createElement('span');
-          label.className = 'share-name';
-          label.textContent = name;
-          const actions = document.createElement('div');
-          actions.className = 'share-actions';
-          const copy = document.createElement('button');
-          copy.type = 'button';
-          copy.className = 'share-copy';
-          copy.dataset.copy = String(index);
-          copy.textContent = '📋 Kopiuj link';
-          actions.append(copy);
-          if (navigator.share) {
-            const send = document.createElement('button');
-            send.type = 'button';
-            send.className = 'share-send';
-            send.dataset.send = String(index);
-            send.textContent = '📨 Wyślij';
-            actions.append(send);
-          }
-          li.append(label, actions);
-          elements.shareList.append(li);
-        });
-      }
-
-      async function copyLink(text) {
-        try {
-          await navigator.clipboard.writeText(text);
-          message('Link skopiowany. Wyślij go tylko właściwej osobie.');
-        } catch (_) {
-          window.prompt('Skopiuj prywatny link i wyślij go uczestnikowi:', text);
-          message('Skopiuj link z wyświetlonego okna.');
-        }
-      }
-
-      elements.shareList.addEventListener('click', async event => {
-        const copy = event.target.closest('button[data-copy]');
-        const send = event.target.closest('button[data-send]');
-        const button = copy || send;
-        if (!button || !shareLinks) return;
-        const index = Number(button.dataset.copy ?? button.dataset.send);
-        if (!Number.isInteger(index) || !shareLinks[index]) return;
-        const link = shareLinks[index];
-        if (send && navigator.share) {
-          try {
-            await navigator.share({title: 'Secret Santa 🎁', text: 'Otwórz swój tajny link do losowania Secret Santa:', url: link});
-          } catch (error) {
-            if (error.name !== 'AbortError') await copyLink(link);
-          }
-        } else { await copyLink(link); }
-      });
-
-      function csvCell(value) {
-        const str = String(value);
-        // Prevent spreadsheet formula injection in participant names.
-        const safe = /^[=+@\-\t\r]/.test(str) ? "'" + str : str;
-        return '"' + safe.replace(/"/g, '""') + '"';
-      }
-
-      elements.backup.addEventListener('click', () => {
-        if (!assignments || !shareLinks) { message('Linki nie są jeszcze gotowe.'); return; }
-        const lines = [['Uczestnik', 'Kupuje prezent dla', 'Prywatny link'].map(csvCell).join(';')];
-        participants.forEach((name, i) => lines.push([name, assignments[i], shareLinks[i]].map(csvCell).join(';')));
-        const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type: 'text/csv;charset=utf-8;'});
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = 'secret-santa-kopia-losowania.csv';
-        document.body.append(anchor);
-        anchor.click();
-        anchor.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        message('Pobrano kopię losowania. Przechowuj ją prywatnie, nie w publicznym repozytorium.');
-      });
-
-      async function showGuestLink() {
-        const hash = location.hash;
-        const guest = hash.startsWith('#gift=');
-        elements.guest.classList.toggle('hidden', !guest);
-        elements.setup.classList.toggle('hidden', guest || Boolean(assignments));
-        elements.draw.classList.toggle('hidden', guest || !assignments);
-        if (!guest) { guestAssignment = null; return; }
-        guestAssignment = null;
-        elements.guestName.textContent = '';
-        elements.guestRecipient.textContent = '';
-        elements.guestResult.classList.add('hidden');
-        elements.guestHide.classList.add('hidden');
-        elements.guestReveal.classList.remove('hidden');
-        elements.guestReveal.disabled = true;
-        elements.guestError.classList.add('hidden');
-        try {
-          const data = await readPrivateLink(hash);
-          if (location.hash !== hash) return;
-          guestAssignment = data;
-          elements.guestName.textContent = data.giver;
-          elements.guestReveal.disabled = false;
-        } catch (_) {
-          elements.guestError.textContent = 'Ten link jest nieprawidłowy lub uszkodzony. Poproś organizatora o ponowne wysłanie.';
-          elements.guestError.classList.remove('hidden');
-        }
-      }
-
-      elements.guestReveal.addEventListener('click', () => {
-        if (!guestAssignment) return;
-        elements.guestRecipient.textContent = guestAssignment.recipient;
-        elements.guestResult.classList.remove('hidden');
-        elements.guestReveal.classList.add('hidden');
-        elements.guestHide.classList.remove('hidden');
-      });
-      elements.guestHide.addEventListener('click', () => {
-        elements.guestRecipient.textContent = '';
-        elements.guestResult.classList.add('hidden');
-        elements.guestHide.classList.add('hidden');
-        elements.guestReveal.classList.remove('hidden');
-      });
-      window.addEventListener('hashchange', () => { void showGuestLink(); });
-
-      function hideOrganizer() {
-        elements.organizerResults.classList.add('hidden');
-        elements.organizerToggle.setAttribute('aria-expanded', 'false');
-        elements.organizerToggle.textContent = '🎅 Pokaż wszystkie pary (organizator)';
-        elements.allPairs.replaceChildren();
-      }
-
-      function showOrganizer() {
-        if (!assignments) return;
-        if (!window.confirm('Uwaga! Zobaczysz WSZYSTKIE pary. Czy na pewno chcesz pokazać wyniki organizatora?')) return;
-        conceal();
-        elements.allPairs.replaceChildren();
-        participants.forEach((giver, index) => {
-          const li = document.createElement('li');
-          const giverName = document.createElement('span');
-          giverName.className = 'giver';
-          giverName.textContent = giver;
-          const arrow = document.createElement('span');
-          arrow.setAttribute('aria-hidden', 'true');
-          arrow.textContent = '→';
-          const recipientName = document.createElement('span');
-          recipientName.className = 'recipient';
-          recipientName.textContent = assignments[index];
-          li.append(giverName, arrow, recipientName);
-          elements.allPairs.append(li);
-        });
-        elements.organizerResults.classList.remove('hidden');
-        elements.organizerToggle.setAttribute('aria-expanded', 'true');
-        elements.organizerToggle.textContent = '🙈 Ukryj wszystkie pary';
-        message('Panel organizatora jest otwarty. Nie pokazuj tej listy uczestnikom.');
-      }
-
-      elements.organizerToggle.addEventListener('click', () => {
-        if (elements.organizerResults.classList.contains('hidden')) showOrganizer();
-        else { hideOrganizer(); message('Wszystkie pary zostały ukryte.'); }
-      });
-      elements.organizerHide.addEventListener('click', () => {
-        hideOrganizer();
-        message('Wszystkie pary zostały ukryte.');
-      });
-
-      elements.form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const name = elements.input.value.trim().replace(/\s+/g, ' ');
-        if (!name) { message('Wpisz imię uczestnika.'); elements.input.focus(); return; }
-        if (name.length > 40) { message('Imię może mieć maksymalnie 40 znaków.'); return; }
-        if (participants.length >= 100) { message('Limit: 100 uczestników.'); return; }
-        if (participants.some(p => p.toLocaleLowerCase('pl') === name.toLocaleLowerCase('pl'))) {
-          message('Ta osoba jest już na liście.'); return;
-        }
-        participants.push(name);
-        elements.input.value = '';
-        save(); render(); message(''); elements.input.focus();
-      });
-
-      elements.people.addEventListener('click', (event) => {
-        const button = event.target.closest('button[data-index]');
-        if (!button) return;
-        participants.splice(Number(button.dataset.index), 1);
-        assignments = null;
-        shareLinks = null;
-        save(); render(); message('');
-      });
-
-      elements.drawButton.addEventListener('click', () => {
-        try {
-          assignments = drawAssignments(participants);
-          shareLinks = null;
-          save(); render(); message('Gotowe! Wyślij każdemu uczestnikowi jego prywatny link.');
-        } catch (_) { message('Nie udało się przeprowadzić losowania. Spróbuj ponownie.'); }
-      });
-
-      elements.select.addEventListener('change', () => {
-        hideOrganizer();
-        elements.reveal.disabled = elements.select.value === '';
-      });
-
-      elements.reveal.addEventListener('click', () => {
-        const index = Number(elements.select.value);
-        if (!assignments || elements.select.value === '' || !Number.isInteger(index) || index < 0 || index >= participants.length) return;
-        hideOrganizer();
-        elements.recipient.textContent = assignments[index];
-        elements.result.classList.remove('hidden');
-        elements.reveal.classList.add('hidden');
-        elements.hide.classList.remove('hidden');
-        elements.select.disabled = true;
-        message('Zapamiętaj imię, a potem ukryj wynik.');
-      });
-
-      elements.hide.addEventListener('click', () => { conceal(); hideOrganizer(); message('Wynik ukryty. Możesz przekazać urządzenie dalej.'); });
-      elements.restart.addEventListener('click', () => {
-        if (!window.confirm('Usunąć wyniki losowania? Uczestnicy pozostaną na liście.')) return;
-        assignments = null;
-        shareLinks = null;
-        save(); render(); message('Możesz zmienić listę lub wykonać nowe losowanie.');
-      });
-
-      load(); render(); void showGuestLink();
-    })();
-  </script>
+  el.draw.addEventListener('click', async () => {
+    if (loading) return;
+    loading = true;el.draw.disabled = true;el.draw.textContent = '🔐 Szyfruję losowanie…';
+    status('Tworzę osobne, zaszyfrowane wyniki dla wszystkich uczestników.');
+    try {
+      const created = await createRoom(normalizeNames(names));
+      adminData = {v:1, ...created};
+      saveAdmin();
+      renderAdmin();
+    } catch (error) {
+      status(error.message || 'Nie udało się wykonać losowania.');
+    } finally {
+      loading = false;
+      el.draw.textContent = '🎲 Rozlosuj prezenty';
+      renderNames();
+    }
+  });
+  el.copyRoom.addEventListener('click',() => {if (adminData) void copyText(groupLink(adminData));});
+  el.sendRoom.addEventListener('click',async () => {
+    if (!adminData) return;
+    const link = groupLink(adminData);
+    if (navigator.share) {
+      try {await navigator.share({title:'Secret Santa 🎁', text:'Oto wspólny link do losowania. Wybierz swoje imię i wpisz otrzymany prywatnie PIN:',url:link});}
+      catch (err) {if(err.name !== 'AbortError')await copyText(link);}
+    } else await copyText(link);
+  });
+  el.pinList.addEventListener('click',event => {
+    const b = event.target.closest('button[data-index]');
+    if (!b || !adminData) return;
+    const i = Number(b.dataset.index);
+    if (!Number.isInteger(i) || !adminData.pins[i]) return;
+    void copyText(adminData.pins[i]);
+  });
+  el.showPairs.addEventListener('click',() => {
+    if (!adminData) return;
+    if (!el.pairsPanel.classList.contains('hidden')) {hidePairs();return;}
+    if (!window.confirm('Pokaż wszystkie tajne wyniki? Upewnij się, że inni nie patrzą na ekran.')) return;
+    el.pairsList.replaceChildren();
+    adminData.names.forEach((name,i) => {
+      const li = document.createElement('li');
+      const giver = document.createElement('span');giver.textContent = name;
+      const recipient = document.createElement('strong');recipient.textContent = '→ ' + adminData.recipients[i];
+      li.append(giver,recipient); el.pairsList.append(li);
+    });
+    el.pairsPanel.classList.remove('hidden');
+    el.showPairs.textContent = '🙈 Ukryj wszystkie pary';
+    el.showPairs.setAttribute('aria-expanded','true');
+  });
+  el.hidePairs.addEventListener('click',hidePairs);
+  function csvCell(str) {
+    const text = String(str);
+    const safe = /^[=+@\-\t\r]/.test(text) ? "'" + text : text;
+    return '"' + safe.replace(/"/g,'""') + '"';
+  }
+  function download(text, mime, filename) {
+    const blob = new Blob([text],{type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;a.download = filename;document.body.append(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    status('Plik zapisany. Zachowaj go prywatnie.');
+  }
+  el.backupJson.addEventListener('click',() => {
+    if (adminData) download(JSON.stringify(adminData,null,2),'application/json','secret-santa-kopia-prywatna.json');
+  });
+  el.backupCsv.addEventListener('click',() => {
+    if (!adminData) return;
+    const rows = [['Imię','PIN','Prezent dla'].map(csvCell).join(';')];
+    adminData.names.forEach((name,i) => rows.push([name,adminData.pins[i],adminData.recipients[i]].map(csvCell).join(';')));
+    download('\ufeff'+rows.join('\r\n'),'text/csv;charset=utf-8','secret-santa-przydzialy-prywatne.csv');
+  });
+  el.restoreFile.addEventListener('change',async () => {
+    const file = el.restoreFile.files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > 150000) throw new Error('Plik jest zbyt duży.');
+      const data = JSON.parse(await file.text());
+      if (!backupIsValid(data)) throw new Error('Nieprawidłowa kopia zapasowa.');
+      adminData = data;names = data.names.slice();saveAdmin();renderAdmin();
+      status('Przywrócono losowanie z prywatnej kopii.');
+    } catch (error) {status(error.message || 'Nie udało się otworzyć kopii.');}
+    el.restoreFile.value = '';
+  });
+  el.reset.addEventListener('click',() => {
+    if (!window.confirm('Rozpocząć nowe losowanie? Stary link pozostanie ważny, dlatego po ponownym losowaniu poinformuj wszystkich o nowym linku i PIN-ach.'))return;
+    names = adminData?.names.slice() || [];adminData = null;
+    try {localStorage.removeItem(storageKey);}catch(_){}
+    route();status('Możesz zmienić uczestników i rozpocząć nowe losowanie.');
+  });
+  el.unlockForm.addEventListener('submit',async event => {
+    event.preventDefault();
+    if (!room) return;
+    const name = el.guestName.value;
+    const pin = el.guestPin.value.trim();
+    if (!name) {status('Wybierz swoje imię.');return;}
+    if (!new RegExp('^[0-9]{'+PIN_LENGTH+'}$').test(pin)) {status('Wpisz '+PIN_LENGTH+'-cyfrowy PIN.');return;}
+    hideGuestResult();
+    const currentRoom = room;
+    el.unlock.disabled = true;el.unlock.textContent = '🔐 Sprawdzam PIN…';
+    status('');
+    try {
+      const recipient = await unlock(currentRoom,name,pin);
+      if (room !== currentRoom) return;
+      el.guestRecipient.textContent = recipient;
+      el.guestResult.classList.remove('hidden');
+      el.guestHide.classList.remove('hidden');
+    } catch (error) {status(error.message || 'Nie udało się odczytać wyniku.');}
+    finally {el.unlock.disabled = false;el.unlock.textContent = '🎁 Odkryj mój wynik';}
+  });
+  el.guestHide.addEventListener('click',() => {hideGuestResult();status('Wynik ukryty.');});
+  window.addEventListener('hashchange',route);
+  loadAdmin();
+  route();
+</script>
 </body>
 </html>
